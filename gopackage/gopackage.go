@@ -21,30 +21,30 @@ type GoPackage struct {
 }
 
 // Name returns the package fully qualified name.
-func (goPackage *GoPackage) Name() string {
-	return goPackage.name
+func (p *GoPackage) Name() string {
+	return p.name
 }
 
 // IsInstalled checks if the current package is installed on the system.
-func (goPackage *GoPackage) IsInstalled() bool {
-	out, _ := exec.Command("go", "list", goPackage.name).CombinedOutput()
-	return string(bytes.Trim(out, "\n")) == goPackage.name
+func (p *GoPackage) IsInstalled() bool {
+	out, _ := exec.Command("go", "list", p.name).CombinedOutput()
+	return string(bytes.Trim(out, "\n")) == p.name
 }
 
 // Install attempts to install the current package.
-func (goPackage *GoPackage) Install() error {
-	return exec.Command("go", "get", "-u", goPackage.name).Run()
+func (p *GoPackage) Install() error {
+	return exec.Command("go", "get", "-u", p.name).Run()
 }
 
 // InstallIfNeeded will automatically install the package if it not was yet.
 // The `verbose` option determines whether to print information about the process.
-func (goPackage *GoPackage) InstallIfNeeded(verbose bool) {
-	if !goPackage.IsInstalled() {
+func (p *GoPackage) InstallIfNeeded(verbose bool) {
+	if !p.IsInstalled() {
 		if verbose {
-			log.Printf("Did not find `%s`. Attempting to installing..\n", goPackage.Name())
+			log.Printf("Did not find `%s`. Attempting to installing..\n", p.Name())
 		}
-		if err := goPackage.Install(); err != nil && verbose {
-			log.Printf("Failed to install `%s`\n", goPackage.Name())
+		if err := p.Install(); err != nil && verbose {
+			log.Printf("Failed to install `%s`\n", p.Name())
 		}
 	}
 }

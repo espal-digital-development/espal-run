@@ -15,7 +15,8 @@ import (
 
 func generateTLSFiles() error {
 	// TODO :: This won't be needed for online versions with LetsEncrypt or external certificates
-	// TODO :: This is really unstable. Files can be named anything, thus this fully relies on files being .key and .crt/.cert
+	// TODO :: This is really unstable. Files can be named anything,
+	// thus this fully relies on files being .key and .crt/.cert.
 	var keyFileFound bool
 	var crtFileFound bool
 	serverPath := filepath.FromSlash("app/server")

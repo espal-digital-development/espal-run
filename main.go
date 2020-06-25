@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/juju/errors"
 )
 
@@ -16,12 +17,16 @@ import (
 // chosen in the config.yml. If they are totally different; it may cause
 // discrepancies for this command.
 
-// TODO :: Detect not being in a project directory. Or maybe give flag option to target the project directory/directories
+// TODO :: Detect not being in a project directory. Or maybe give flag
+// option to target the project directory/directories.
 
 const (
-	linuxOS   = "linux"
-	darwinOS  = "darwin"
-	windowsOS = "windows"
+	linuxOS  = "linux"
+	darwinOS = "darwin"
+	// windowsOS = "windows"
+
+	defaultDesiredNodes  = 1
+	randomPasswordLength = 32
 )
 
 var (
@@ -58,13 +63,30 @@ func main() {
 	}
 
 	setSoftUlimit()
-	// TODO :: Generate localhost.crt/localhost.key on-the-fly (even if openssh etc. is still needed) (every OS probably needs a total custom variance here too)
+	// TODO :: Generate localhost.crt/localhost.key on-the-fly (even if openssh etc. is still needed)
+	// (every OS probably needs a total custom variance here too).
 	if err := generateTLSFiles(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := configureCockroachDB(); err != nil {
+
+	// TODO :: Haproxy as well for full fanciness?
+	cockroach, err := cockroach.New()
+	if err != nil {
+		log.Fatal(errors.Trace(err))
+	}
+	// TODO :: Auto-detect info based on existing config.yml?
+	cockroach.SetDesiredNodes(defaultDesiredNodes)
+	cockroach.SetRootUser("root")                                 // TODO :: Random generate user
+	cockroach.SetHTTPUser("espal")                                // TODO :: Random generate user
+	cockroach.SetHTTPPassword(randomString(randomPasswordLength)) // TODO :: Something safer, like `openssl rand -hex 16`
+	if err := cockroach.SetDatabasePath("./app/database"); err != nil {
+		log.Fatal(errors.Trace(err))
+	}
+	cockroach.SetResetDB(resetDB)
+	if err := cockroach.Resolve(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
+
 	checkStoresIntegrity()
 	installPackages()
 

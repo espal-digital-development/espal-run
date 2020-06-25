@@ -12,6 +12,11 @@ import (
 	"github.com/juju/errors"
 )
 
+const (
+	adminURLLength = 4
+	pprofURLLength = 4
+)
+
 type configOption struct {
 	Tag           string
 	Info          string
@@ -112,11 +117,11 @@ func checkConfig() error {
 	configToRequest = append(configToRequest, []*configOption{
 		{
 			Tag:   "#URLS_ADMIN",
-			Value: "_" + randomString(4),
+			Value: "_" + randomString(adminURLLength),
 		},
 		{
 			Tag:   "#PPROF_ADMIN",
-			Value: "_" + randomString(4),
+			Value: "_" + randomString(pprofURLLength),
 		},
 	}...)
 

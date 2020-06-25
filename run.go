@@ -11,8 +11,10 @@ import (
 func run() error {
 	cmd := exec.Command("go", "run", cwd+"/main.go")
 
-	// // TODO :: When calling TERM on this command, it needs to gracefully stop the espal-core too (prove will be when it reports it's winddown info about how long the server ran for)
-	// // TODO :: If the output doesn't stop with a newline or throws an error, it probably won't show anything at all. Needs more testing
+	// TODO :: When calling TERM on this command, it needs to gracefully stop the espal-core
+	// too (prove will be when it reports it's winddown info about how long the server ran for).
+	// TODO :: If the output doesn't stop with a newline or throws an error,
+	// it probably won't show anything at all. Needs more testing.
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
 		return errors.Trace(err)

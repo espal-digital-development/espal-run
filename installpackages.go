@@ -1,6 +1,6 @@
 package main
 
-import "espaldd.com/espal-core/cmd/espal-run/gopackage"
+import "github.com/espal-digital-development/espal-run/gopackage"
 
 func installPackages() {
 	// TODO :: Maybe just embed them in the vendor and build locally?

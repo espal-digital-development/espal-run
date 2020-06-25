@@ -1,9 +1,8 @@
-module espaldd.com/espal-core/cmd/espal-run
+module github.com/espal-digital-development/espal-run
 
 go 1.14
 
 require (
-	github.com/davecgh/go-spew v1.1.1
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/juju/testing v0.0.0-20200608005635-e4eedbc6f7aa // indirect
 	github.com/mattn/go-zglob v0.0.2
