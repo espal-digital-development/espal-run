@@ -20,10 +20,15 @@ import (
 // TODO :: Detect not being in a project directory. Or maybe give flag
 // option to target the project directory/directories.
 
+// TODO :: Security inspections of the area where the espal app is ran.
+// Check mod values and if the environment has dangerous settings set.
+
+// TODO :: Add support for blending xargs parameters and ENV variables.
+
 const (
-	linuxOS  = "linux"
-	darwinOS = "darwin"
-	// windowsOS = "windows"
+	linuxOS   = "linux"
+	darwinOS  = "darwin"
+	windowsOS = "windows"
 
 	defaultDesiredNodes  = 1
 	randomPasswordLength = 32

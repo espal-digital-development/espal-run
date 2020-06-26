@@ -28,7 +28,6 @@ func (c *Cockroach) Resolve() error {
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
 	}
-
 	if c.resetDB && os.IsNotExist(err) {
 		log.Println(cockroachResettingDatabaseNotRequired)
 		return nil
@@ -48,45 +47,42 @@ func (c *Cockroach) Resolve() error {
 		return errors.Trace(err)
 	}
 
-	if c.isUnixOS() {
-		portsNumber := c.portStart
-		httpPortsNumber := c.httpPortStart
-		for i := 0; i < c.desiredNodes; i++ {
-			storeName := fmt.Sprintf("%s%d", "node", i+1)
-			if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
-				return errors.Trace(err)
-			}
-
-			// TODO :: This is a wait guess, but might be slower on some devices
-			// and might need a better detection mechanism (maybe `lsof -nP -iTCP:26257 | grep LISTEN`?)
-			time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
-			portsNumber++
-			httpPortsNumber++
+	portsNumber := c.portStart
+	httpPortsNumber := c.httpPortStart
+	for i := 0; i < c.desiredNodes; i++ {
+		storeName := fmt.Sprintf("%s%d", "node", i+1)
+		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
+			return errors.Trace(err)
 		}
-	} else if c.isWinOS() {
-		// TODO :: Needs a Windows variance
-		return errors.Errorf("No Windows setup/reset implemented yet..")
+
+		// TODO :: This is a wait guess, but might be slower on some devices
+		// and might need a better detection mechanism (maybe `lsof -nP -iTCP:26257 | grep LISTEN`?)
+		time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
+		portsNumber++
+		httpPortsNumber++
+	}
+
+	// TODO :: Continue from here (startNode function above)
+	if true {
+		return errors.New("STOP")
 	}
 
 	if err := c.initializeCluster(); err != nil {
 		return errors.Trace(err)
 	}
 
-	if c.isUnixOS() {
-		if err := c.generateDatabaseUsers(); err != nil {
-			return errors.Trace(err)
-		}
-		if err := c.generateHTTPInterfaceUser(); err != nil {
-			return errors.Trace(err)
-		}
-	} else if c.isWinOS() {
-		// TODO :: Needs a Windows variance
-		return errors.Errorf("No Windows setup/reset implemented yet..")
+	if err := c.generateDatabaseUsers(); err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.generateHTTPInterfaceUser(); err != nil {
+		return errors.Trace(err)
 	}
 
 	if err := c.generateDatabaseUserCertificates(); err != nil {
 		return errors.Trace(err)
 	}
+
+	return errors.Errorf("STOP")
 
 	if err := c.report(); err != nil {
 		return errors.Trace(err)
@@ -118,25 +114,46 @@ func (c *Cockroach) report() error {
 }
 
 func (c *Cockroach) setupDirectories() error {
-	out, err := exec.Command("rm", "-rf", c.databasePath).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
+	_, err := os.Stat(c.databasePath)
+	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
+	}
+	if os.IsExist(err) && c.resetDB {
+		if c.isUnixOS() {
+			out, err := exec.Command("rm", "-rf", c.databasePath).CombinedOutput()
+			if err != nil {
+				log.Println(string(out))
+				return errors.Trace(err)
+			}
+		} else if c.isWinOS() {
+			out, err := exec.Command("rmdir", "/S", c.databasePath).CombinedOutput()
+			if err != nil {
+				log.Println(string(out))
+				return errors.Trace(err)
+			}
+		}
 	}
 
 	log.Println("Creating certs dir..")
-	out, err = exec.Command("mkdir", "-m", "740", "-p", c.certsDir).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
+	_, err = os.Stat(c.certsDir)
+	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(c.certsDir, 0740); err != nil {
+			return errors.Trace(err)
+		}
+	}
+	_, err = os.Stat(c.safeDir)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(c.safeDir, 0740); err != nil {
+			return errors.Trace(err)
+		}
 	}
 
-	log.Println("Creating safe dir..")
-	out, err = exec.Command("mkdir", "-m", "740", "-p", c.safeDir).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
 	return nil
 }
 

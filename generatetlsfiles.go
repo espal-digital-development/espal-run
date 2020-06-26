@@ -76,21 +76,24 @@ func generateTLSFiles() error {
 				}
 			}
 		}
+	} else if runtime.GOOS == windowsOS {
+		out, _ := exec.Command("which", "openssl").CombinedOutput()
+		if !bytes.Contains(out, []byte("/openssl")) {
+			return errors.Errorf("OpenSSL is not installed. Please install Git or OpenSSL directly")
+		}
+	}
 
-		openSSLCreation := []string{
-			`req`, `-new`, `-newkey`, `rsa:4096`, `-days`, `365`, `-nodes`, `-x509`,
-			`-subj`, `/C=US/ST=State/L=Town/O=Office/CN=localhost`,
-			`-keyout`, `app/server/localhost.key`,
-			`-out`, `app/server/localhost.crt`,
-		}
-		out, err := exec.Command("openssl", openSSLCreation...).CombinedOutput()
-		if err != nil {
-			log.Println(string(out))
-			return errors.Trace(err)
-		}
-	} // else if runtime.GOOS == windowsOS {
-	// TODO :: Needs a Windows variance
-	// }
+	openSSLCreation := []string{
+		`req`, `-new`, `-newkey`, `rsa:4096`, `-days`, `365`, `-nodes`, `-x509`,
+		`-subj`, `/C=US/ST=State/L=Town/O=Office/CN=localhost`,
+		`-keyout`, `app/server/localhost.key`,
+		`-out`, `app/server/localhost.crt`,
+	}
+	out, err := exec.Command("openssl", openSSLCreation...).CombinedOutput()
+	if err != nil {
+		log.Println(string(out))
+		return errors.Trace(err)
+	}
 
 	return nil
 }
