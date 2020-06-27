@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"github.com/juju/errors"
@@ -18,7 +17,6 @@ func (c *Cockroach) Resolve() error {
 	if err := c.validate(); err != nil {
 		return errors.Trace(err)
 	}
-
 	if err := c.checkInstall(); err != nil {
 		return errors.Trace(err)
 	}
@@ -47,19 +45,8 @@ func (c *Cockroach) Resolve() error {
 		return errors.Trace(err)
 	}
 
-	portsNumber := c.portStart
-	httpPortsNumber := c.httpPortStart
-	for i := 0; i < c.desiredNodes; i++ {
-		storeName := fmt.Sprintf("%s%d", "node", i+1)
-		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
-			return errors.Trace(err)
-		}
-
-		// TODO :: This is a wait guess, but might be slower on some devices
-		// and might need a better detection mechanism (maybe `lsof -nP -iTCP:26257 | grep LISTEN`?)
-		time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
-		portsNumber++
-		httpPortsNumber++
+	if err := c.runNodes(); err != nil {
+		return errors.Trace(err)
 	}
 
 	if err := c.initializeCluster(); err != nil {
@@ -77,33 +64,7 @@ func (c *Cockroach) Resolve() error {
 		return errors.Trace(err)
 	}
 
-	if err := c.report(); err != nil {
-		return errors.Trace(err)
-	}
-
-	return nil
-}
-
-func (c *Cockroach) report() error {
-	fmt.Println("")
-	log.Println("All done! You can now login to the http interface:")
-	fmt.Println("")
-	fmt.Printf("  Address:  https://%s:%d\n", c.httpHost, c.httpPortStart)
-	fmt.Printf("  User:     %s\n", c.httpUser)
-	fmt.Printf("  Password: %s\n", c.httpPassword)
-	fmt.Println("")
-	fmt.Println("  STORE THIS INFORMATION SOMEWHERE SAFE! IT WON'T BE DISPLAYED AGAIN.")
-	fmt.Println("")
-
-	// TODO :: There should be a non-interactive mode so this won't block
-	// when being executed inside in scripts.
-	fmt.Println("Press any key to continue..")
-	reader := bufio.NewReader(os.Stdin)
-	_, err := reader.ReadString('\n')
-	if err != nil && err != io.EOF {
-		return errors.Trace(err)
-	}
-	return nil
+	return errors.Trace(c.report())
 }
 
 func (c *Cockroach) setupDirectories() error {
@@ -140,39 +101,6 @@ func (c *Cockroach) setupDirectories() error {
 	return nil
 }
 
-func (c *Cockroach) generateCertificates() error {
-	log.Println("Generating ca key..")
-	out, err := exec.Command("cockroach", "cert", "create-ca",
-		"--certs-dir="+c.certsDir,
-		"--ca-key="+filepath.FromSlash(c.safeDir+"/"+c.caKeyName)).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
-
-	log.Println("Creating certficate..")
-	out, err = exec.Command("cockroach", "cert", "create-client", c.rootUser,
-		"--certs-dir="+c.certsDir,
-		"--ca-key="+filepath.FromSlash(c.safeDir+"/"+c.caKeyName)).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
-	return nil
-}
-
-func (c *Cockroach) createPrimaryNode() error {
-	log.Println("Creating primary node..")
-	out, err := exec.Command("cockroach", "cert", "create-node", c.host, "$(hostname)",
-		"--certs-dir="+c.certsDir,
-		"--ca-key="+filepath.FromSlash(c.safeDir+"/"+c.caKeyName)).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
-	return nil
-}
-
 func (c *Cockroach) getHostsJoin() string {
 	joinsString := ""
 	portsNumber := c.portStart
@@ -189,6 +117,24 @@ func (c *Cockroach) getHostsJoin() string {
 	return joinsString
 }
 
+func (c *Cockroach) runNodes() error {
+	portsNumber := c.portStart
+	httpPortsNumber := c.httpPortStart
+	for i := 0; i < c.desiredNodes; i++ {
+		storeName := fmt.Sprintf("%s%d", "node", i+1)
+		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
+			return errors.Trace(err)
+		}
+
+		// TODO :: This is a wait guess, but might be slower on some devices
+		// and might need a better detection mechanism (maybe `lsof -nP -iTCP:26257 | grep LISTEN`?)
+		time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
+		portsNumber++
+		httpPortsNumber++
+	}
+	return nil
+}
+
 func (c *Cockroach) initializeCluster() error {
 	log.Println("Initializing the cluster..")
 	out, err := exec.Command("cockroach", "init", "--certs-dir="+c.certsDir,
@@ -200,17 +146,24 @@ func (c *Cockroach) initializeCluster() error {
 	return nil
 }
 
-func (c *Cockroach) generateDatabaseUserCertificates() error {
-	users := []string{"selecter", "creator", "inserter", "updater", "deletor", "migrator"}
-	for k := range users {
-		log.Printf("Creating certificate for user `%s`..", users[k])
-		out, err := exec.Command("cockroach", "cert", "create-client", users[k],
-			"--certs-dir="+c.certsDir,
-			"--ca-key="+filepath.FromSlash(c.safeDir+"/"+c.caKeyName)).CombinedOutput()
-		if err != nil {
-			log.Println(string(out))
-			return errors.Trace(err)
-		}
+func (c *Cockroach) report() error {
+	fmt.Println("")
+	log.Println("All done! You can now login to the http interface:")
+	fmt.Println("")
+	fmt.Printf("  Address:  https://%s:%d\n", c.httpHost, c.httpPortStart)
+	fmt.Printf("  User:     %s\n", c.httpUser)
+	fmt.Printf("  Password: %s\n", c.httpPassword)
+	fmt.Println("")
+	fmt.Println("  STORE THIS INFORMATION SOMEWHERE SAFE! IT WON'T BE DISPLAYED AGAIN.")
+	fmt.Println("")
+
+	// TODO :: There should be a non-interactive mode so this won't block
+	// when being executed inside in scripts.
+	fmt.Println("Press any key to continue..")
+	reader := bufio.NewReader(os.Stdin)
+	_, err := reader.ReadString('\n')
+	if err != nil && err != io.EOF {
+		return errors.Trace(err)
 	}
 	return nil
 }

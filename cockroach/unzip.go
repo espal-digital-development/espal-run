@@ -25,52 +25,50 @@ func (c *Cockroach) unzip(src, dest string) error {
 		return errors.Trace(err)
 	}
 
-	// Closure to address file descriptors issue with all the deferred .Close() methods
-	extractAndWriteFile := func(f *zip.File) error {
-		rc, err := f.Open()
-		if err != nil {
+	for _, f := range r.File {
+		if err := c.extractZipAndWriteFile(f, dest); err != nil {
 			return errors.Trace(err)
 		}
+	}
+
+	return nil
+}
+
+func (c *Cockroach) extractZipAndWriteFile(f *zip.File, dest string) error {
+	rc, err := f.Open()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	defer func() {
+		if err := rc.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	path := filepath.Join(dest, f.Name)
+
+	if f.FileInfo().IsDir() {
+		return errors.Trace(os.MkdirAll(path, f.Mode()))
+	}
+
+	if !f.FileInfo().IsDir() {
+		if err := os.MkdirAll(filepath.Dir(path), f.Mode()); err != nil {
+			return errors.Trace(err)
+		}
+		f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
 		defer func() {
-			if err := rc.Close(); err != nil {
+			if err := f.Close(); err != nil {
 				log.Println(err)
 			}
 		}()
 
-		path := filepath.Join(dest, f.Name)
-
-		if f.FileInfo().IsDir() {
-			if err := os.MkdirAll(path, f.Mode()); err != nil {
-				return errors.Trace(err)
-			}
-		} else {
-			if err := os.MkdirAll(filepath.Dir(path), f.Mode()); err != nil {
-				return errors.Trace(err)
-			}
-			f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return err
-			}
-			defer func() {
-				if err := f.Close(); err != nil {
-					log.Println(err)
-				}
-			}()
-
-			_, err = io.Copy(f, rc)
-			if err != nil {
-				return errors.Trace(err)
-			}
-		}
-		return nil
-	}
-
-	for _, f := range r.File {
-		err := extractAndWriteFile(f)
+		_, err = io.Copy(f, rc)
 		if err != nil {
 			return errors.Trace(err)
 		}
 	}
-
 	return nil
 }

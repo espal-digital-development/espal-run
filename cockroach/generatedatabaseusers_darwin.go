@@ -1,4 +1,4 @@
-// +build unix
+// +build darwin
 
 package cockroach
 
@@ -13,17 +13,16 @@ import (
 	"github.com/juju/errors"
 )
 
-func (c *Cockroach) generateHTTPInterfaceUser() error {
-	log.Println("Generating http interface user..")
+func (c *Cockroach) generateDatabaseUsers() error {
+	log.Println("Generating database, users, roles and assigning privileges..")
 	tmpSQLFile := filepath.FromSlash(os.TempDir() + "/tmp.sql")
-	if err := ioutil.WriteFile(tmpSQLFile,
-		[]byte(fmt.Sprintf(httpUserSQL, c.httpUser, c.httpPassword, c.httpUser)), 0700); err != nil {
+	if err := ioutil.WriteFile(tmpSQLFile, []byte(setupDatabaseSQL), 0600); err != nil {
 		return errors.Trace(err)
 	}
 	tmpSHFile := filepath.FromSlash(os.TempDir() + "/tmp.sh")
 	if err := ioutil.WriteFile(tmpSHFile,
 		[]byte(fmt.Sprintf("#!/bin/sh\n\n"+`cockroach sql --certs-dir=%s --host=%s:%d < %s`,
-			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0700); err != nil {
+			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0600); err != nil {
 		return errors.Trace(err)
 	}
 	out, err := exec.Command("/bin/sh", tmpSHFile).CombinedOutput()
