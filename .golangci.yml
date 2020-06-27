@@ -1,20 +1,32 @@
 run:
   concurrency: 4
-  timeout: 30s
+  timeout: 60s
   issues-exit-code: 25
+linters-settings:
+  gocritic:
+    disabled-checks:
+      - regexpMust
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gochecknoglobals
+    - linters:
+      - gosec
+      text: "^G204:"
 linters:
   enable:
     - bodyclose
     - golint
     - stylecheck
-    - gosec
+    # - gosec
     - interfacer
     - unconvert
     - goconst
     - gocognit
     - asciicheck
-    - gofmt
-    - goimports
+    # - gofmt
+    # - goimports
     - depguard # This probably needs custom configuration
     - misspell
     - unparam

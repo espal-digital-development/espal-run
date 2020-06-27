@@ -3,7 +3,6 @@ package cockroach
 import (
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/juju/errors"
@@ -135,14 +134,6 @@ func (c *Cockroach) GetResetDB() bool {
 // SetResetDB sets resetDB.
 func (c *Cockroach) SetResetDB(resetDB bool) {
 	c.resetDB = resetDB
-}
-
-func (c *Cockroach) isUnixOS() bool {
-	return runtime.GOOS == darwinOS || runtime.GOOS == linuxOS
-}
-
-func (c *Cockroach) isWinOS() bool {
-	return runtime.GOOS == windowsOS
 }
 
 func (c *Cockroach) isSafePortRange(port int, fieldName string) error {

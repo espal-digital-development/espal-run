@@ -1,10 +1,6 @@
 package cockroach
 
 const (
-	linuxOS   = "linux"
-	darwinOS  = "darwin"
-	windowsOS = "windows"
-
 	minAllowedPortRange = 1024
 	maxAllowedPortRange = 49151
 

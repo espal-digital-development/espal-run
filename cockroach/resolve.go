@@ -28,12 +28,13 @@ func (c *Cockroach) Resolve() error {
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
 	}
-	if c.resetDB && os.IsNotExist(err) {
+	switch {
+	case c.resetDB && os.IsNotExist(err):
 		log.Println(cockroachResettingDatabaseNotRequired)
 		return nil
-	} else if c.resetDB {
+	case c.resetDB:
 		log.Println(cockroachResettingDatabase)
-	} else if os.IsNotExist(err) {
+	case os.IsNotExist(err):
 		log.Println(cockroachCreatingNewDatabase)
 	}
 
@@ -51,6 +52,7 @@ func (c *Cockroach) Resolve() error {
 	httpPortsNumber := c.httpPortStart
 	for i := 0; i < c.desiredNodes; i++ {
 		storeName := fmt.Sprintf("%s%d", "node", i+1)
+		// TODO :: WINDOWS :: Continue from here (startNode function above)
 		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
 			return errors.Trace(err)
 		}
@@ -60,11 +62,6 @@ func (c *Cockroach) Resolve() error {
 		time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
 		portsNumber++
 		httpPortsNumber++
-	}
-
-	// TODO :: Continue from here (startNode function above)
-	if true {
-		return errors.New("STOP")
 	}
 
 	if err := c.initializeCluster(); err != nil {
@@ -82,8 +79,6 @@ func (c *Cockroach) Resolve() error {
 		return errors.Trace(err)
 	}
 
-	return errors.Errorf("STOP")
-
 	if err := c.report(); err != nil {
 		return errors.Trace(err)
 	}
@@ -93,7 +88,7 @@ func (c *Cockroach) Resolve() error {
 
 func (c *Cockroach) report() error {
 	fmt.Println("")
-	log.Println("All done! You can no login to the http interface:")
+	log.Println("All done! You can now login to the http interface:")
 	fmt.Println("")
 	fmt.Printf("  Address:  https://%s:%d\n", c.httpHost, c.httpPortStart)
 	fmt.Printf("  User:     %s\n", c.httpUser)
@@ -114,23 +109,13 @@ func (c *Cockroach) report() error {
 }
 
 func (c *Cockroach) setupDirectories() error {
-	_, err := os.Stat(c.databasePath)
+	stat, err := os.Stat(c.databasePath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
 	}
-	if os.IsExist(err) && c.resetDB {
-		if c.isUnixOS() {
-			out, err := exec.Command("rm", "-rf", c.databasePath).CombinedOutput()
-			if err != nil {
-				log.Println(string(out))
-				return errors.Trace(err)
-			}
-		} else if c.isWinOS() {
-			out, err := exec.Command("rmdir", "/S", c.databasePath).CombinedOutput()
-			if err != nil {
-				log.Println(string(out))
-				return errors.Trace(err)
-			}
+	if stat != nil && c.resetDB {
+		if err := os.RemoveAll(c.databasePath); err != nil {
+			return errors.Trace(err)
 		}
 	}
 
@@ -220,13 +205,13 @@ func (c *Cockroach) initializeCluster() error {
 func (c *Cockroach) generateDatabaseUsers() error {
 	log.Println("Generating database, users, roles and assigning privileges..")
 	tmpSQLFile := filepath.FromSlash(os.TempDir() + "/tmp.sql")
-	if err := ioutil.WriteFile(tmpSQLFile, []byte(setupDatabaseSQL), 0700); err != nil {
+	if err := ioutil.WriteFile(tmpSQLFile, []byte(setupDatabaseSQL), 0600); err != nil {
 		return errors.Trace(err)
 	}
 	tmpSHFile := filepath.FromSlash(os.TempDir() + "/tmp.sh")
 	if err := ioutil.WriteFile(tmpSHFile,
 		[]byte(fmt.Sprintf("#!/bin/sh\n\n"+`cockroach sql --certs-dir=%s --host=%s:%d < %s`,
-			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0700); err != nil {
+			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0600); err != nil {
 		return errors.Trace(err)
 	}
 	out, err := exec.Command("/bin/sh", tmpSHFile).CombinedOutput()

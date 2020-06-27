@@ -1,5 +1,6 @@
 package main
 
+// nolint:gochecknoglobals
 var configYmlExample = []byte(`general:
   development: true
   logging: true
