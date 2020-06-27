@@ -1,4 +1,4 @@
-package main
+package configchecker
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/espal-digital-development/espal-run/randomstring"
 	"github.com/juju/errors"
 )
 
@@ -25,9 +26,25 @@ type configOption struct {
 	Value         string
 }
 
-func checkConfig() error {
-	configPath := "./app/config.yml"
-	_, err := os.Stat(configPath)
+type ConfigChecker struct {
+	randomString *randomstring.RandomString
+	path         string
+}
+
+// GetPath gets path.
+func (c *ConfigChecker) GetPath() string {
+	return c.path
+}
+
+// SetPath sets path.
+func (c *ConfigChecker) SetPath(path string) {
+	c.path = path
+}
+
+// TODO :: 77 Show explanation and info about SMTP server (local or services like Mailtrap)
+
+func (c *ConfigChecker) Do() error {
+	_, err := os.Stat(c.path)
 	if err != nil && !os.IsNotExist(err) {
 		return nil
 	}
@@ -35,52 +52,7 @@ func checkConfig() error {
 		return nil
 	}
 
-	// TODO :: 77 Show explanation and info about SMTP server (local or services like Mailtrap)
-
-	configToRequest := []*configOption{
-		{
-			Tag:           "#DATABASE_HOST",
-			Name:          "Database host",
-			Info:          "\033[0;34m0.0.0.0\033[m, \033[0;34m127.0.0.1\033[m, \033[0;94mlocalhost\033[m",
-			DefaultOption: "localhost",
-		},
-		{
-			Tag:           "#DATABASE_PORT",
-			Name:          "Database port",
-			Info:          "\033[0;94m26257\033[m",
-			DefaultOption: "26257",
-		},
-		{
-			Tag:           "#DATABASE_NAME",
-			Name:          "Database name",
-			Info:          "\033[0;94mapp\033[m",
-			DefaultOption: "app",
-		},
-		{
-			Tag:  "#EMAIL_HOST",
-			Name: "Email host",
-			Info: "smtp.domain.com",
-		},
-		{
-			Tag:           "#EMAIL_PORT",
-			Name:          "Email port",
-			DefaultOption: "2525",
-		},
-		{
-			Tag:  "#EMAIL_USERNAME",
-			Name: "Email username",
-		},
-		{
-			Tag:  "#EMAIL_PASSWORD",
-			Name: "Email password",
-		},
-		{
-			Tag:  "#EMAIL_NO_REPLY_ADDRESS",
-			Name: "Email no-reply address",
-			Info: "noreply@domain.com",
-		},
-	}
-
+	configToRequest := c.defaultToRequest()
 	reader := bufio.NewReader(os.Stdin)
 	for _, configRequest := range configToRequest {
 		for {
@@ -96,7 +68,6 @@ func checkConfig() error {
 			if err != nil {
 				return errors.Trace(err)
 			}
-
 			value = strings.Trim(value, "\n")
 			if value == "" {
 				if configRequest.DefaultOption == "" {
@@ -105,7 +76,6 @@ func checkConfig() error {
 					value = configRequest.DefaultOption
 				}
 			}
-
 			configRequest.Value = value
 			break
 		}
@@ -117,11 +87,11 @@ func checkConfig() error {
 	configToRequest = append(configToRequest, []*configOption{
 		{
 			Tag:   "#URLS_ADMIN",
-			Value: "_" + randomString(adminURLLength),
+			Value: "_" + c.randomString.Simple(adminURLLength),
 		},
 		{
 			Tag:   "#PPROF_ADMIN",
-			Value: "_" + randomString(pprofURLLength),
+			Value: "_" + c.randomString.Simple(pprofURLLength),
 		},
 	}...)
 
@@ -129,9 +99,16 @@ func checkConfig() error {
 		output = bytes.Replace(output, []byte(configRequest.Tag), []byte(configRequest.Value), 1)
 	}
 
-	if err := ioutil.WriteFile(configPath, output, 0644); err != nil {
+	if err := ioutil.WriteFile(c.path, output, 0600); err != nil {
 		return errors.Trace(err)
 	}
-
 	return nil
+}
+
+// New returns a new instance of ConfigChecker.
+func New(randomString *randomstring.RandomString) (*ConfigChecker, error) {
+	c := &ConfigChecker{
+		randomString: randomString,
+	}
+	return c, nil
 }

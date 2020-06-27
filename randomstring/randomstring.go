@@ -1,4 +1,4 @@
-package main
+package randomstring
 
 import (
 	"math/rand"
@@ -12,14 +12,17 @@ const (
 	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
 )
 
-var randomStringSrc = rand.NewSource(time.Now().UnixNano())
+type RandomString struct {
+	src rand.Source
+}
 
-func randomString(n int) string {
+// Simple returns a simple random string in the requested length.
+func (r *RandomString) Simple(n int) string {
 	buffer := make([]byte, n)
 	// A randomStringSrc.Int63() generates 63 random bits, enough for letterIdxMax characters
-	for i, cache, remain := n-1, randomStringSrc.Int63(), letterIdxMax; i >= 0; {
+	for i, cache, remain := n-1, r.src.Int63(), letterIdxMax; i >= 0; {
 		if remain == 0 {
-			cache, remain = randomStringSrc.Int63(), letterIdxMax
+			cache, remain = r.src.Int63(), letterIdxMax
 		}
 		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
 			buffer[i] = letterBytes[idx]
@@ -30,4 +33,12 @@ func randomString(n int) string {
 	}
 
 	return string(buffer)
+}
+
+// New returns a new instance of RandomString.
+func New() (*RandomString, error) {
+	r := &RandomString{
+		src: rand.NewSource(time.Now().UnixNano()),
+	}
+	return r, nil
 }

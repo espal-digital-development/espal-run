@@ -8,10 +8,14 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
+	"runtime"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
+	"github.com/espal-digital-development/espal-run/configchecker"
 	"github.com/espal-digital-development/espal-run/gopackage"
 	"github.com/espal-digital-development/espal-run/openssl"
+	"github.com/espal-digital-development/espal-run/randomstring"
 	"github.com/espal-digital-development/espal-run/sslgenerator"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
 	"github.com/juju/errors"
@@ -29,8 +33,15 @@ import (
 
 // TODO :: Add support for blending xargs parameters and ENV variables.
 
+// TODO :: Check macOS Homebrew installed
+
 const (
-	randomPasswordLength = 32
+	randomPasswordLength    = 32
+	defaultServerPath       = "./app/server"
+	defaultDatabasePath     = "./app/database"
+	defaultStoresPath       = "./stores"
+	defaultDatabaseRootUser = "root"
+	defaultDatabaseHTTPUser = "espal"
 )
 
 // nolint:gochecknoglobals
@@ -43,21 +54,31 @@ var (
 	dbNodes     int
 )
 
-func main() {
+func parseFlags() {
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
 	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
 	flag.IntVar(&dbPortStart, "db-port-start", 26259, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
 	flag.Parse()
+}
 
+func setCwd() error {
 	var err error
 	cwd, err = os.Getwd()
-	if err != nil {
+	return errors.Trace(err)
+}
+
+func main() {
+	parseFlags()
+	if err := setCwd(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	// TODO :: Check macOS Homebrew installed
+	randomString, err := randomstring.New()
+	if err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
 
 	setSoftUlimit()
 
@@ -73,56 +94,67 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	sslGenerator.SetServerPath("./app/server")
+	sslGenerator.SetServerPath(defaultServerPath)
 	if err := sslGenerator.Do(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	// TODO :: Haproxy as well for full fanciness?
-	cockroach, err := cockroach.New()
+	if err := cockroachSetup(randomString); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	storeIntegrity, err := storeintegrity.New()
 	if err != nil {
-		log.Fatal(errors.Trace(err))
+		log.Fatal(errors.ErrorStack(err))
 	}
-	// TODO :: Auto-detect info based on existing config.yml?
-	cockroach.SetDesiredNodes(dbNodes)
-	cockroach.SetPortStart(dbPortStart)
-	cockroach.SetRootUser("root")                                 // TODO :: Random generate user
-	cockroach.SetHTTPUser("espal")                                // TODO :: Random generate user
-	cockroach.SetHTTPPassword(randomString(randomPasswordLength)) // TODO :: Something safer, like `openssl rand -hex 16`
-	if err := cockroach.SetDatabasePath("./app/database"); err != nil {
-		log.Fatal(errors.Trace(err))
-	}
-	cockroach.SetResetDB(resetDB)
-	if err := cockroach.Resolve(); err != nil {
+	storeIntegrity.SetPath(defaultStoresPath)
+	if err := storeIntegrity.Check(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	storeIntegrity, err := storeintegrity.New()
-	if err != nil {
-		log.Fatal(errors.Trace(err))
-	}
-	storeIntegrity.SetPath("./stores")
-	if err := storeIntegrity.Check(); err != nil {
-		log.Fatal(errors.Trace(err))
-	}
-
 	installPackages()
-
 	if !skipQTC {
 		buildQTC()
 	}
-
 	if runChecks {
 		runAllChecks()
 	}
 
-	if err := checkConfig(); err != nil {
+	configChecker, err := configchecker.New(randomString)
+	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-
+	configChecker.SetPath(defaultStoresPath)
+	if err := configChecker.Do(); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
 	if err := run(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
+}
+
+func cockroachSetup(randomString *randomstring.RandomString) error {
+	// TODO :: Haproxy as well for full fanciness?
+	cockroach, err := cockroach.New()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	// TODO :: Auto-detect info based on existing config.yml?
+	cockroach.SetDesiredNodes(dbNodes)
+	cockroach.SetPortStart(dbPortStart)
+	// TODO :: Random generate user
+	cockroach.SetRootUser(defaultDatabaseRootUser)
+	// TODO :: Random generate user
+	cockroach.SetHTTPUser(defaultDatabaseHTTPUser)
+	// TODO :: Something safer, like `openssl rand -hex 16`
+	cockroach.SetHTTPPassword(randomString.Simple(randomPasswordLength))
+	if err := cockroach.SetDatabasePath(defaultDatabasePath); err != nil {
+		return errors.Trace(err)
+	}
+	cockroach.SetResetDB(resetDB)
+	if err := cockroach.Resolve(); err != nil {
+		return errors.Trace(err)
+	}
+	return nil
 }
 
 func run() error {
@@ -179,6 +211,41 @@ func buildQTC() {
 		log.Fatal(err)
 	}
 	if bytes.Contains(out, []byte("error")) {
+		log.Println(string(out))
+	}
+}
+
+func setSoftUlimit() {
+	// TODO :: Soft limit on Linux needs testing and is probably harder
+	// TODO :: Going over the hard limit isn't allowed. Maybe just give a message and continue then
+	if runtime.GOOS == "darwin" {
+		// TODO :: Could be more efficient to first check if it's already `unlimited` or higher
+		// than `10032`. If so; do nothing.
+		// TODO :: Because this is a soft limit if might not work as an option for
+		// the later-ran espal app?
+		// Windows doesn't need this as it already sets it's limit dangerously high by default
+		if err := exec.Command("ulimit", "-n", "10032").Run(); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func runAllChecks() {
+	out, _ := exec.Command("staticcheck", "./...", "|", "grep", "-v", "bindata.go").CombinedOutput()
+	if bytes.Contains(out, []byte("\n")) {
+		log.Println(string(out))
+	}
+
+	removeCoreChecks := regexp.MustCompile(`(?m)^.*?local[\/\\]opt.*?\n`)
+	out, _ = exec.Command("errcheck", "./...").CombinedOutput()
+	out = bytes.Trim(removeCoreChecks.ReplaceAll(out, []byte("")), "\n")
+	// Silly check if there's more than the normal complain-line
+	if bytes.Contains(out, []byte("\n")) {
+		log.Println(string(out))
+	}
+
+	out, _ = exec.Command("gocheckstyle", "-config=.go_style", ".").CombinedOutput()
+	if !bytes.Contains(out, []byte("There are no problems")) {
 		log.Println(string(out))
 	}
 }

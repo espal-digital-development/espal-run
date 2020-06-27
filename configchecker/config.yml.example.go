@@ -1,4 +1,4 @@
-package main
+package configchecker
 
 // nolint:gochecknoglobals
 var configYmlExample = []byte(`general:

@@ -13,20 +13,20 @@ issues:
         - gochecknoglobals
     - linters:
       - gosec
-      text: "^G204:"
+      text: "^G(107|110|204|305):"
 linters:
   enable:
     - bodyclose
     - golint
     - stylecheck
-    # - gosec
+    - gosec
     - interfacer
     - unconvert
     - goconst
     - gocognit
     - asciicheck
-    # - gofmt
-    # - goimports
+    - gofmt
+    - goimports
     - depguard # This probably needs custom configuration
     - misspell
     - unparam
