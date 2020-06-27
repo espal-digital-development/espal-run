@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -52,7 +51,6 @@ func (c *Cockroach) Resolve() error {
 	httpPortsNumber := c.httpPortStart
 	for i := 0; i < c.desiredNodes; i++ {
 		storeName := fmt.Sprintf("%s%d", "node", i+1)
-		// TODO :: WINDOWS :: Continue from here (startNode function above)
 		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
 			return errors.Trace(err)
 		}
@@ -195,47 +193,6 @@ func (c *Cockroach) initializeCluster() error {
 	log.Println("Initializing the cluster..")
 	out, err := exec.Command("cockroach", "init", "--certs-dir="+c.certsDir,
 		"--host="+fmt.Sprintf("%s:%d", c.host, c.portStart)).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
-	return nil
-}
-
-func (c *Cockroach) generateDatabaseUsers() error {
-	log.Println("Generating database, users, roles and assigning privileges..")
-	tmpSQLFile := filepath.FromSlash(os.TempDir() + "/tmp.sql")
-	if err := ioutil.WriteFile(tmpSQLFile, []byte(setupDatabaseSQL), 0600); err != nil {
-		return errors.Trace(err)
-	}
-	tmpSHFile := filepath.FromSlash(os.TempDir() + "/tmp.sh")
-	if err := ioutil.WriteFile(tmpSHFile,
-		[]byte(fmt.Sprintf("#!/bin/sh\n\n"+`cockroach sql --certs-dir=%s --host=%s:%d < %s`,
-			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0600); err != nil {
-		return errors.Trace(err)
-	}
-	out, err := exec.Command("/bin/sh", tmpSHFile).CombinedOutput()
-	if err != nil {
-		log.Println(string(out))
-		return errors.Trace(err)
-	}
-	return nil
-}
-
-func (c *Cockroach) generateHTTPInterfaceUser() error {
-	log.Println("Generating http interface user..")
-	tmpSQLFile := filepath.FromSlash(os.TempDir() + "/tmp.sql")
-	if err := ioutil.WriteFile(tmpSQLFile,
-		[]byte(fmt.Sprintf(httpUserSQL, c.httpUser, c.httpPassword, c.httpUser)), 0700); err != nil {
-		return errors.Trace(err)
-	}
-	tmpSHFile := filepath.FromSlash(os.TempDir() + "/tmp.sh")
-	if err := ioutil.WriteFile(tmpSHFile,
-		[]byte(fmt.Sprintf("#!/bin/sh\n\n"+`cockroach sql --certs-dir=%s --host=%s:%d < %s`,
-			c.certsDir, c.host, c.portStart, tmpSQLFile)), 0700); err != nil {
-		return errors.Trace(err)
-	}
-	out, err := exec.Command("/bin/sh", tmpSHFile).CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
 		return errors.Trace(err)

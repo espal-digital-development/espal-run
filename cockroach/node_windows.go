@@ -7,5 +7,6 @@ import (
 )
 
 func (c *Cockroach) startNodeNonBlocking(storeName string, portsNumber int, httpPortsNumber int) error {
-	return errors.Trace(errNotImplementedYet)
+	// TODO :: WINDOWS :: Continue from here (startNode function above)
+	return errors.New("not implemented yet")
 }

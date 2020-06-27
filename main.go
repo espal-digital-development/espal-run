@@ -47,7 +47,7 @@ func main() {
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
 	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
-	flag.IntVar(&dbPortStart, "db-port-start", 1, "Port start range")
+	flag.IntVar(&dbPortStart, "db-port-start", 26259, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
 	flag.Parse()
 
