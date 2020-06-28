@@ -7,8 +7,6 @@ const (
 	defaultPortStart     = 26257
 	defaultHTTPPortStart = 26080
 
-	secondsIntervalBetweenNodesStart = 10
-
 	cockroachCreatingNewDatabase          = "Creating a new cockroach database.."
 	cockroachResettingDatabase            = "Resetting the cockroach database.."
 	cockroachResettingDatabaseNotRequired = "No database found. Skipping reset.."
