@@ -42,48 +42,10 @@ func (c *Cockroach) checkInstall() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		_, err = os.Stat(zipPath)
-		if err != nil && !os.IsNotExist(err) {
+		if err := c.download(dbBinPath, dbDirPath, zipPath, zipURL, unzippedPath); err != nil {
 			return errors.Trace(err)
 		}
-		if os.IsNotExist(err) {
-			log.Println("Downloading CockroachDB. This may take a while..")
-			if err := c.downloadFile(zipPath, zipURL); err != nil {
-				return errors.Trace(err)
-			}
-		}
-
-		_, err = os.Stat(dbBinPath)
-		if err != nil && !os.IsNotExist(err) {
-			return errors.Trace(err)
-		}
-		if os.IsNotExist(err) {
-			if err := os.MkdirAll(dbBinPath, 0600); err != nil {
-				return errors.Trace(err)
-			}
-		}
-
-		_, err = os.Stat(unzippedPath)
-		if err != nil && !os.IsNotExist(err) {
-			return errors.Trace(err)
-		}
-		if os.IsNotExist(err) {
-			log.Println("Extracting..")
-			if err := c.unzip(zipPath, dbDirPath); err != nil {
-				return errors.Trace(err)
-			}
-		}
-
-		log.Println("Installing..")
-		unzippedBinaryPath := unzippedPath + filepath.FromSlash("/cockroach.exe")
-		if err := os.Rename(unzippedBinaryPath, dbPath); err != nil {
-			return errors.Trace(err)
-		}
-
-		if err := os.Remove(unzippedPath); err != nil {
-			return errors.Trace(err)
-		}
-		if err := os.Remove(zipPath); err != nil {
+		if err := c.install(dbPath, zipPath, unzippedPath); err != nil {
 			return errors.Trace(err)
 		}
 	}
@@ -109,5 +71,57 @@ func (c *Cockroach) checkInstall() error {
 		os.Setenv("ZONEINFO", zoneInfoPath)
 	}
 
+	return nil
+}
+
+func (c *Cockroach) download(dbBinPath string, dbDirPath string, zipPath string, zipURL string,
+	unzippedPath string) error {
+	_, err := os.Stat(zipPath)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		log.Println("Downloading CockroachDB. This may take a while..")
+		if err := c.downloadFile(zipPath, zipURL); err != nil {
+			return errors.Trace(err)
+		}
+	}
+
+	_, err = os.Stat(dbBinPath)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(dbBinPath, 0600); err != nil {
+			return errors.Trace(err)
+		}
+	}
+
+	_, err = os.Stat(unzippedPath)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		log.Println("Extracting..")
+		if err := c.unzip(zipPath, dbDirPath); err != nil {
+			return errors.Trace(err)
+		}
+	}
+	return nil
+}
+
+func (c *Cockroach) install(dbPath string, zipPath string, unzippedPath string) error {
+	log.Println("Installing..")
+	unzippedBinaryPath := unzippedPath + filepath.FromSlash("/cockroach.exe")
+	if err := os.Rename(unzippedBinaryPath, dbPath); err != nil {
+		return errors.Trace(err)
+	}
+
+	if err := os.Remove(unzippedPath); err != nil {
+		return errors.Trace(err)
+	}
+	if err := os.Remove(zipPath); err != nil {
+		return errors.Trace(err)
+	}
 	return nil
 }

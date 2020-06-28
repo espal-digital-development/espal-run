@@ -9,7 +9,6 @@ const (
 
 	secondsIntervalBetweenNodesStart = 10
 
-	cockroachNotFoundInstalling           = "Did not find `cockroach`. Attempting to installing.."
 	cockroachCreatingNewDatabase          = "Creating a new cockroach database.."
 	cockroachResettingDatabase            = "Resetting the cockroach database.."
 	cockroachResettingDatabaseNotRequired = "No database found. Skipping reset.."
