@@ -6,6 +6,8 @@ linters-settings:
   gocritic:
     disabled-checks:
       - regexpMust
+  funlen:
+    statements: 45
 issues:
   exclude-rules:
     - path: _test\.go

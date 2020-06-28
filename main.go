@@ -15,6 +15,7 @@ import (
 	"github.com/espal-digital-development/espal-run/configchecker"
 	"github.com/espal-digital-development/espal-run/gopackage"
 	"github.com/espal-digital-development/espal-run/openssl"
+	"github.com/espal-digital-development/espal-run/qtcbuilder"
 	"github.com/espal-digital-development/espal-run/randomstring"
 	"github.com/espal-digital-development/espal-run/sslgenerator"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
@@ -113,7 +114,13 @@ func main() {
 
 	installPackages()
 	if !skipQTC {
-		buildQTC()
+		qtcBuilder, err := qtcbuilder.New()
+		if err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
+		if err := qtcBuilder.Do(); err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
 	}
 	if runChecks {
 		runAllChecks()
@@ -202,17 +209,6 @@ func installPackages() {
 	goCheckStyle.InstallIfNeeded(true)
 	errCheck.InstallIfNeeded(true)
 	qtc.InstallIfNeeded(true)
-}
-
-func buildQTC() {
-	log.Println("Building templates. Please wait..")
-	out, err := exec.Command("cd", "pages", "&&", "qtc").CombinedOutput()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if bytes.Contains(out, []byte("error")) {
-		log.Println(string(out))
-	}
 }
 
 func setSoftUlimit() {
