@@ -43,7 +43,7 @@ func (g *SSLGenerator) Do() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.Mkdir(g.serverPath, 0700); err != nil {
+		if err := os.MkdirAll(g.serverPath, 0700); err != nil {
 			return errors.Trace(err)
 		}
 	}

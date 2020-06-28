@@ -7,7 +7,7 @@ const (
 	defaultPortStart     = 26257
 	defaultHTTPPortStart = 26080
 
-	secondsIntervalBetweenNodesStart = 3
+	secondsIntervalBetweenNodesStart = 10
 
 	cockroachNotFoundInstalling           = "Did not find `cockroach`. Attempting to installing.."
 	cockroachCreatingNewDatabase          = "Creating a new cockroach database.."
