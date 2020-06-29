@@ -1,23 +1,25 @@
 package configchecker
 
 func (c *ConfigChecker) defaultToRequest() []*configOption {
+	setColors()
+
 	return []*configOption{
 		{
 			Tag:           "#DATABASE_HOST",
 			Name:          "Database host",
-			Info:          "\033[0;34m0.0.0.0\033[m, \033[0;34m127.0.0.1\033[m, \033[0;94mlocalhost\033[m",
+			Info:          lightBlueString("0.0.0.0") + ", " + lightBlueString("127.0.0.1") + ", " + darkBlueString("localhost"),
 			DefaultOption: "localhost",
 		},
 		{
 			Tag:           "#DATABASE_PORT",
 			Name:          "Database port",
-			Info:          "\033[0;94m26257\033[m",
+			Info:          darkBlueString("26257"),
 			DefaultOption: "26257",
 		},
 		{
 			Tag:           "#DATABASE_NAME",
 			Name:          "Database name",
-			Info:          "\033[0;94mapp\033[m",
+			Info:          darkBlueString("app"),
 			DefaultOption: "app",
 		},
 		{
