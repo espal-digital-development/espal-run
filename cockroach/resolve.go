@@ -29,6 +29,11 @@ func (c *Cockroach) Resolve() error {
 	case c.resetDB && os.IsNotExist(err):
 		log.Println(cockroachResettingDatabaseNotRequired)
 		return nil
+	case !c.resetDB && !os.IsNotExist(err):
+		if err := c.runNodes(); err != nil {
+			return errors.Trace(err)
+		}
+		return nil
 	case c.resetDB:
 		log.Println(cockroachResettingDatabase)
 	case os.IsNotExist(err):
@@ -127,7 +132,7 @@ func (c *Cockroach) runNodes() error {
 		}
 
 		// TODO :: This is a wait guess, but might be slower on some devices
-		// and might need a better detection mechanism (maybe `lsof -nP -iTCP:26257 | grep LISTEN`?)
+		// and might need a better detection mechanism (maybe `lsof -nP -iTCP:36257 | grep LISTEN`?)
 		time.Sleep(secondsIntervalBetweenNodesStart * time.Second)
 		portsNumber++
 		httpPortsNumber++

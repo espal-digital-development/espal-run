@@ -4,8 +4,8 @@ const (
 	minAllowedPortRange = 1024
 	maxAllowedPortRange = 49151
 
-	defaultPortStart     = 26257
-	defaultHTTPPortStart = 26080
+	defaultPortStart     = 36257
+	defaultHTTPPortStart = 36080
 
 	cockroachCreatingNewDatabase          = "Creating a new cockroach database.."
 	cockroachResettingDatabase            = "Resetting the cockroach database.."

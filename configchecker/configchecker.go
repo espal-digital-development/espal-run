@@ -29,6 +29,7 @@ type configOption struct {
 type ConfigChecker struct {
 	randomString *randomstring.RandomString
 	path         string
+	textPainter  *textPainter
 }
 
 // GetPath gets path.
@@ -109,6 +110,12 @@ func (c *ConfigChecker) Do() error {
 func New(randomString *randomstring.RandomString) (*ConfigChecker, error) {
 	c := &ConfigChecker{
 		randomString: randomString,
+		textPainter: &textPainter{
+			reset:     "\033[m",
+			lightBlue: "\033[0;34m",
+			darkBlue:  "\033[0;94m",
+		},
 	}
+	c.textPainter.resolveDefaults()
 	return c, nil
 }
