@@ -13,11 +13,20 @@ import (
 	"github.com/juju/errors"
 )
 
-func (c *Cockroach) startNodeNonBlocking(storeName string, portsNumber int, httpPortsNumber int) error {
-	if err := c.stopRunningNodes(storeName, portsNumber, "instance"); err != nil {
+func (c *Cockroach) startNodeNonBlocking(storeName string, portNumber int, httpPortNumber int,
+	rebootIfNeeded bool) error {
+	portIsOccupied, err := c.portIsOccupied(portNumber)
+	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := c.stopRunningNodes(storeName, httpPortsNumber, "http interface"); err != nil {
+	if portIsOccupied && !rebootIfNeeded {
+		return nil
+	}
+
+	if err := c.stopRunningNode(storeName, portNumber, "instance"); err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.stopRunningNode(storeName, httpPortNumber, "http interface"); err != nil {
 		return errors.Trace(err)
 	}
 
@@ -26,8 +35,8 @@ func (c *Cockroach) startNodeNonBlocking(storeName string, portsNumber int, http
 	// Only difference with unix darwin is the missing --background argument here
 	cmd := exec.Command("cockroach", "start", "--certs-dir="+c.certsDir,
 		"--store="+filepath.FromSlash(c.databasePath+"/"+storeName),
-		fmt.Sprintf("--listen-addr=%s:%d", c.host, portsNumber),
-		fmt.Sprintf("--http-addr=%s:%d", c.httpHost, httpPortsNumber),
+		fmt.Sprintf("--listen-addr=%s:%d", c.host, portNumber),
+		fmt.Sprintf("--http-addr=%s:%d", c.httpHost, httpPortNumber),
 		"--join="+c.getHostsJoin())
 
 	stdOut, err := cmd.StdoutPipe()
@@ -59,12 +68,12 @@ func (c *Cockroach) startNodeNonBlocking(storeName string, portsNumber int, http
 	return nil
 }
 
-func (c *Cockroach) stopRunningNodes(storeName string, portsNumber int, subject string) error {
-	out, err := exec.Command("lsof", "-nP", fmt.Sprintf("-iTCP:%d", portsNumber)).CombinedOutput()
-	if err != nil && len(out) > 0 {
-		log.Println(string(out))
+func (c *Cockroach) stopRunningNode(storeName string, portNumber int, subject string) error {
+	out, portIsOccupied, err := c.portIsOccupied(portNumber)
+	if err != nil {
 		return errors.Trace(err)
-	} else if len(out) > 0 {
+	}
+	if portIsOccupied {
 		matches := c.rePortListen.FindAllSubmatch(out, 1)
 		if len(matches) > 0 && len(matches[0]) == 2 {
 			log.Printf("Node `"+storeName+"` it's %s is still running. Trying to stop it..", subject)

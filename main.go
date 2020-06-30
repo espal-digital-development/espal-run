@@ -165,6 +165,8 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 }
 
 func run() error {
+	log.Println("Starting the app..")
+
 	cmd := exec.Command("go", "run", cwd+"/main.go")
 
 	// TODO :: When calling TERM on this command, it needs to gracefully stop the espal-core

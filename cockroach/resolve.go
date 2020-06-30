@@ -30,7 +30,7 @@ func (c *Cockroach) Resolve() error {
 		log.Println(cockroachResettingDatabaseNotRequired)
 		return nil
 	case !c.resetDB && !os.IsNotExist(err):
-		if err := c.runNodes(); err != nil {
+		if err := c.runNodes(false); err != nil {
 			return errors.Trace(err)
 		}
 		return nil
@@ -50,7 +50,7 @@ func (c *Cockroach) Resolve() error {
 		return errors.Trace(err)
 	}
 
-	if err := c.runNodes(); err != nil {
+	if err := c.runNodes(true); err != nil {
 		return errors.Trace(err)
 	}
 
@@ -122,12 +122,21 @@ func (c *Cockroach) getHostsJoin() string {
 	return joinsString
 }
 
-func (c *Cockroach) runNodes() error {
+func (c *Cockroach) portIsOccupied(portNumber int) ([]byte, bool, error) {
+	out, err := exec.Command("lsof", "-nP", fmt.Sprintf("-iTCP:%d", portNumber)).CombinedOutput()
+	if err != nil && len(out) > 0 {
+		log.Println(string(out))
+		return out, false, errors.Trace(err)
+	}
+	return out, len(out) > 0, nil
+}
+
+func (c *Cockroach) runNodes(rebootIfNeeded bool) error {
 	portsNumber := c.portStart
 	httpPortsNumber := c.httpPortStart
 	for i := 0; i < c.desiredNodes; i++ {
 		storeName := fmt.Sprintf("%s%d", "node", i+1)
-		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber); err != nil {
+		if err := c.startNodeNonBlocking(storeName, portsNumber, httpPortsNumber, rebootIfNeeded); err != nil {
 			return errors.Trace(err)
 		}
 
