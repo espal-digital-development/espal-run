@@ -1,3 +1,5 @@
+// +build darwin
+
 package configchecker
 
 type textPainter struct {
