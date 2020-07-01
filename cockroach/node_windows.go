@@ -15,7 +15,7 @@ import (
 
 func (c *Cockroach) startNodeNonBlocking(storeName string, portNumber int, httpPortNumber int,
 	rebootIfNeeded bool) error {
-	portIsOccupied, err := c.portIsOccupied(portNumber)
+	_, portIsOccupied, err := c.portIsOccupied(portNumber)
 	if err != nil {
 		return errors.Trace(err)
 	}

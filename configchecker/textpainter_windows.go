@@ -7,6 +7,12 @@ import (
 	"syscall"
 )
 
+type textPainter struct {
+	reset     string
+	lightBlue string
+	darkBlue  string
+}
+
 func (p *textPainter) resolveDefaults() {
 	kernel32 := syscall.NewLazyDLL("kernel32.dll")
 	setConsoleModeProc := kernel32.NewProc("SetConsoleMode")
@@ -19,4 +25,12 @@ func (p *textPainter) resolveDefaults() {
 		p.lightBlue = ""
 		p.darkBlue = ""
 	}
+}
+
+func (p *textPainter) lightBlueString(value string) string {
+	return p.lightBlue + value + p.reset
+}
+
+func (p *textPainter) darkBlueString(value string) string {
+	return p.darkBlue + value + p.reset
 }
