@@ -41,6 +41,7 @@ const (
 	defaultServerPath       = "./app/server"
 	defaultDatabasePath     = "./app/database"
 	defaultStoresPath       = "./stores"
+	defaultConfigPath       = "./app/config.yml"
 	defaultDatabaseRootUser = "root"
 	defaultDatabaseHTTPUser = "espal"
 )
@@ -130,7 +131,7 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	configChecker.SetPath(defaultStoresPath)
+	configChecker.SetPath(defaultConfigPath)
 	if err := configChecker.Do(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
