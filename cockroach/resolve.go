@@ -106,6 +106,29 @@ func (c *Cockroach) setupDirectories() error {
 	return nil
 }
 
+func (c *Cockroach) generateDatabaseUsers() error {
+	log.Println("Generating database, users, roles and assigning privileges..")
+	out, err := exec.Command("cockroach", "sql", "--certs-dir="+c.certsDir, fmt.Sprintf("--host=%s:%d", c.host,
+		c.portStart), `--execute=`+setupDatabaseSQL).CombinedOutput()
+	if err != nil {
+		log.Println(string(out))
+		return errors.Trace(err)
+	}
+	return nil
+}
+
+func (c *Cockroach) generateHTTPInterfaceUser() error {
+	log.Println("Generating http interface user..")
+	sqlString := fmt.Sprintf(httpUserSQL, c.httpUser, c.httpPassword, c.httpUser)
+	out, err := exec.Command("cockroach", "sql", "--certs-dir="+c.certsDir, fmt.Sprintf("--host=%s:%d", c.host,
+		c.portStart), `--execute=`+sqlString).CombinedOutput()
+	if err != nil {
+		log.Println(string(out))
+		return errors.Trace(err)
+	}
+	return nil
+}
+
 func (c *Cockroach) getHostsJoin() string {
 	joinsString := ""
 	portsNumber := c.portStart
