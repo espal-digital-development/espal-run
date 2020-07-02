@@ -84,20 +84,7 @@ func main() {
 
 	setSoftUlimit()
 
-	openSSL, err := openssl.New()
-	if err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
-	if err := openSSL.CheckAndInstall(); err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
-
-	sslGenerator, err := sslgenerator.New()
-	if err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
-	sslGenerator.SetServerPath(defaultServerPath)
-	if err := sslGenerator.Do(); err != nil {
+	if err := checkSSL(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
@@ -138,6 +125,26 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
+}
+
+func checkSSL() error {
+	openSSL, err := openssl.New()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if err := openSSL.CheckAndInstall(); err != nil {
+		return errors.Trace(err)
+	}
+
+	sslGenerator, err := sslgenerator.New()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	sslGenerator.SetServerPath(defaultServerPath)
+	if err := sslGenerator.Do(); err != nil {
+		return errors.Trace(err)
+	}
+	return nil
 }
 
 func cockroachSetup(randomString *randomstring.RandomString) error {
