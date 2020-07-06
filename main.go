@@ -3,13 +3,16 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
+	"sync/atomic"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -122,7 +125,7 @@ func main() {
 	if err := configChecker.Do(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := run(); err != nil {
+	if err := startWatching(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 }
@@ -172,40 +175,87 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 	return nil
 }
 
-func run() error {
-	log.Println("Starting the app..")
+func startWatching() error {
+	log.Println("Watching the app..")
 
-	cmd := exec.Command("go", "run", cwd+"/main.go")
+	firstTime := true
+	for {
+		if firstTime {
+			log.Println("Starting instance..")
+		} else {
+			log.Println("Restarting instance..")
+		}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		_, _, _, err := run(ctx)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		// var restart atomic.Value
+		// restart.Store(false)
 
-	// TODO :: When calling TERM on this command, it needs to gracefully stop the espal-core
-	// too (prove will be when it reports it's winddown info about how long the server ran for).
-	// TODO :: If the output doesn't stop with a newline or throws an error,
-	// it probably won't show anything at all. Needs more testing.
+		// go func(cancel context.CancelFunc) {
+		// 	time.Sleep(8 * time.Second) // nolint:gomnd
+		// 	cancel()
+		// 	scannerSwitch.Store(false)
+		// 	time.Sleep(1 * time.Second)
+		// 	stdOut.Close()
+		// 	stdErr.Close()
+		// 	restart.Store(true)
+		// }(cancel)
+
+		// for {
+		// 	if restart.Load().(bool) {
+		// 		break
+		// 	}
+		// 	time.Sleep(1 * time.Second)
+		// }
+		// time.Sleep(10 * time.Second) // nolint:gomnd
+		firstTime = false
+	}
+}
+
+func run(ctx context.Context) (atomic.Value, io.ReadCloser, io.ReadCloser, error) {
+	var scannerSwitch atomic.Value
+	scannerSwitch.Store(true)
+	cmd := exec.CommandContext(ctx, "go", "run", cwd+"/main.go")
+
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
-		return errors.Trace(err)
+		return scannerSwitch, nil, nil, errors.Trace(err)
 	}
 	stdErr, err := cmd.StderrPipe()
 	if err != nil {
-		return errors.Trace(err)
+		return scannerSwitch, nil, nil, errors.Trace(err)
 	}
 	if err := cmd.Start(); err != nil {
-		return errors.Trace(err)
+		return scannerSwitch, nil, nil, errors.Trace(err)
 	}
-	scanner := bufio.NewScanner(stdOut)
-	for scanner.Scan() {
-		m := scanner.Text()
-		fmt.Println(m)
-	}
-	errScanner := bufio.NewScanner(stdErr)
-	for errScanner.Scan() {
-		m := errScanner.Text()
-		fmt.Println(m)
-	}
-	if err := cmd.Wait(); err != nil {
-		return errors.Trace(err)
-	}
-	return nil
+
+	go func(cmd *exec.Cmd) {
+		scanner := bufio.NewScanner(stdOut)
+		for scanner.Scan() {
+			if !scannerSwitch.Load().(bool) {
+				break
+			}
+			m := scanner.Text()
+			fmt.Println(m)
+		}
+		errScanner := bufio.NewScanner(stdErr)
+		for errScanner.Scan() {
+			if !scannerSwitch.Load().(bool) {
+				break
+			}
+			m := errScanner.Text()
+			fmt.Println(m)
+		}
+		if err := cmd.Wait(); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}(cmd)
+
+	return scannerSwitch, stdOut, stdErr, nil
 }
 
 func installPackages() {
