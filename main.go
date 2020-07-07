@@ -1,18 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
-	"sync/atomic"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -125,7 +121,7 @@ func main() {
 	if err := configChecker.Do(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := startWatching(); err != nil {
+	if err := run(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 }
@@ -175,100 +171,58 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 	return nil
 }
 
-func startWatching() error {
-	log.Println("Watching the app..")
+func run() error {
+	log.Println("You can now run on of the following to start the app:")
+	fmt.Println("- go run main.go")
+	fmt.Println("- fresh")
+	return nil
 
-	firstTime := true
-	for {
-		if firstTime {
-			log.Println("Starting instance..")
-		} else {
-			log.Println("Restarting instance..")
-		}
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		_, _, _, err := run(ctx)
-		if err != nil {
-			return errors.Trace(err)
-		}
-		// var restart atomic.Value
-		// restart.Store(false)
+	// log.Println("Watching the app..")
 
-		// go func(cancel context.CancelFunc) {
-		// 	time.Sleep(8 * time.Second) // nolint:gomnd
-		// 	cancel()
-		// 	scannerSwitch.Store(false)
-		// 	time.Sleep(1 * time.Second)
-		// 	stdOut.Close()
-		// 	stdErr.Close()
-		// 	restart.Store(true)
-		// }(cancel)
+	// cmd := exec.Command("fresh")
 
-		// for {
-		// 	if restart.Load().(bool) {
-		// 		break
-		// 	}
-		// 	time.Sleep(1 * time.Second)
-		// }
-		// time.Sleep(10 * time.Second) // nolint:gomnd
-		firstTime = false
-	}
-}
+	// stdOut, err := cmd.StdoutPipe()
+	// if err != nil {
+	// 	return errors.Trace(err)
+	// }
+	// stdErr, err := cmd.StderrPipe()
+	// if err != nil {
+	// 	return errors.Trace(err)
+	// }
+	// if err := cmd.Start(); err != nil {
+	// 	return errors.Trace(err)
+	// }
 
-func run(ctx context.Context) (atomic.Value, io.ReadCloser, io.ReadCloser, error) {
-	var scannerSwitch atomic.Value
-	scannerSwitch.Store(true)
-	cmd := exec.CommandContext(ctx, "go", "run", cwd+"/main.go")
+	// scanner := bufio.NewScanner(stdOut)
+	// for scanner.Scan() {
+	// 	m := scanner.Text()
+	// 	fmt.Println(m)
+	// }
+	// errScanner := bufio.NewScanner(stdErr)
+	// for errScanner.Scan() {
+	// 	m := errScanner.Text()
+	// 	fmt.Println(m)
+	// }
+	// if err := cmd.Wait(); err != nil {
+	// 	fmt.Println(err)
+	// 	return errors.Trace(err)
+	// }
 
-	stdOut, err := cmd.StdoutPipe()
-	if err != nil {
-		return scannerSwitch, nil, nil, errors.Trace(err)
-	}
-	stdErr, err := cmd.StderrPipe()
-	if err != nil {
-		return scannerSwitch, nil, nil, errors.Trace(err)
-	}
-	if err := cmd.Start(); err != nil {
-		return scannerSwitch, nil, nil, errors.Trace(err)
-	}
-
-	go func(cmd *exec.Cmd) {
-		scanner := bufio.NewScanner(stdOut)
-		for scanner.Scan() {
-			if !scannerSwitch.Load().(bool) {
-				break
-			}
-			m := scanner.Text()
-			fmt.Println(m)
-		}
-		errScanner := bufio.NewScanner(stdErr)
-		for errScanner.Scan() {
-			if !scannerSwitch.Load().(bool) {
-				break
-			}
-			m := errScanner.Text()
-			fmt.Println(m)
-		}
-		if err := cmd.Wait(); err != nil {
-			fmt.Println(err)
-			return
-		}
-	}(cmd)
-
-	return scannerSwitch, stdOut, stdErr, nil
+	// return nil
 }
 
 func installPackages() {
-	// TODO :: Maybe just embed them in the vendor and build locally?
-	staticCheck := gopackage.New("honnef.co/go/tools/cmd/staticcheck")
-	goCheckStyle := gopackage.New("github.com/qiniu/checkstyle/gocheckstyle")
-	errCheck := gopackage.New("github.com/kisielk/errcheck")
+	// staticCheck := gopackage.New("honnef.co/go/tools/cmd/staticcheck")
+	// goCheckStyle := gopackage.New("github.com/qiniu/checkstyle/gocheckstyle")
+	// errCheck := gopackage.New("github.com/kisielk/errcheck")
 	qtc := gopackage.New("github.com/valyala/quicktemplate/qtc")
+	// fresh := gopackage.New("github.com/Allendar/fresh")
 	// TODO :: 77777 The go list calls aren't working correctly due to the Go modules project sub-environment
-	staticCheck.InstallIfNeeded(true)
-	goCheckStyle.InstallIfNeeded(true)
-	errCheck.InstallIfNeeded(true)
+	// staticCheck.InstallIfNeeded(true)
+	// goCheckStyle.InstallIfNeeded(true)
+	// errCheck.InstallIfNeeded(true)
 	qtc.InstallIfNeeded(true)
+	// fresh.InstallIfNeeded(true)
 }
 
 func setSoftUlimit() {
