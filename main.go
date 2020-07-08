@@ -3,12 +3,12 @@ package main
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
+	"syscall"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -16,6 +16,7 @@ import (
 	"github.com/espal-digital-development/espal-run/openssl"
 	"github.com/espal-digital-development/espal-run/qtcbuilder"
 	"github.com/espal-digital-development/espal-run/randomstring"
+	"github.com/espal-digital-development/espal-run/runner"
 	"github.com/espal-digital-development/espal-run/sslgenerator"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
 	"github.com/juju/errors"
@@ -81,7 +82,9 @@ func main() {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	setSoftUlimit()
+	if err := setSoftUlimit(); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
 
 	if err := checkSSL(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
@@ -121,7 +124,12 @@ func main() {
 	if err := configChecker.Do(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := run(); err != nil {
+
+	appRunner, err := runner.New()
+	if err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	if err := appRunner.Start(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 }
@@ -171,73 +179,22 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 	return nil
 }
 
-func run() error {
-	log.Println("You can now run on of the following to start the app:")
-	fmt.Println("- go run main.go")
-	fmt.Println("- fresh")
-	return nil
-
-	// log.Println("Watching the app..")
-
-	// cmd := exec.Command("fresh")
-
-	// stdOut, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	return errors.Trace(err)
-	// }
-	// stdErr, err := cmd.StderrPipe()
-	// if err != nil {
-	// 	return errors.Trace(err)
-	// }
-	// if err := cmd.Start(); err != nil {
-	// 	return errors.Trace(err)
-	// }
-
-	// scanner := bufio.NewScanner(stdOut)
-	// for scanner.Scan() {
-	// 	m := scanner.Text()
-	// 	fmt.Println(m)
-	// }
-	// errScanner := bufio.NewScanner(stdErr)
-	// for errScanner.Scan() {
-	// 	m := errScanner.Text()
-	// 	fmt.Println(m)
-	// }
-	// if err := cmd.Wait(); err != nil {
-	// 	fmt.Println(err)
-	// 	return errors.Trace(err)
-	// }
-
-	// return nil
-}
-
 func installPackages() {
-	// staticCheck := gopackage.New("honnef.co/go/tools/cmd/staticcheck")
-	// goCheckStyle := gopackage.New("github.com/qiniu/checkstyle/gocheckstyle")
-	// errCheck := gopackage.New("github.com/kisielk/errcheck")
 	qtc := gopackage.New("github.com/valyala/quicktemplate/qtc")
-	// fresh := gopackage.New("github.com/Allendar/fresh")
-	// TODO :: 77777 The go list calls aren't working correctly due to the Go modules project sub-environment
-	// staticCheck.InstallIfNeeded(true)
-	// goCheckStyle.InstallIfNeeded(true)
-	// errCheck.InstallIfNeeded(true)
 	qtc.InstallIfNeeded(true)
-	// fresh.InstallIfNeeded(true)
 }
 
-func setSoftUlimit() {
-	// TODO :: Soft limit on Linux needs testing and is probably harder
-	// TODO :: Going over the hard limit isn't allowed. Maybe just give a message and continue then
+func setSoftUlimit() error {
 	if runtime.GOOS == "darwin" {
-		// TODO :: Could be more efficient to first check if it's already `unlimited` or higher
-		// than `10032`. If so; do nothing.
-		// TODO :: Because this is a soft limit if might not work as an option for
-		// the later-ran espal app?
-		// Windows doesn't need this as it already sets it's limit dangerously high by default
-		if err := exec.Command("ulimit", "-n", "10032").Run(); err != nil {
-			log.Fatal(err)
+		var rLimit syscall.Rlimit
+		rLimit.Max = 10000
+		rLimit.Cur = 10000
+		err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+		if err != nil {
+			return errors.Trace(err)
 		}
 	}
+	return nil
 }
 
 func runAllChecks() {

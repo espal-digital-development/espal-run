@@ -42,7 +42,7 @@ func (c *ConfigChecker) SetPath(path string) {
 	c.path = path
 }
 
-// TODO :: 77 Show explanation and info about SMTP server (local or services like Mailtrap)
+// TODO :: Show explanation and info about SMTP server (local or services like Mailtrap)
 
 func (c *ConfigChecker) Do() error {
 	_, err := os.Stat(c.path)
