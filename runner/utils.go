@@ -33,6 +33,18 @@ func (r *Runner) isTmpDir(path string) (bool, error) {
 }
 
 func (r *Runner) isIgnoredFolder(path string) bool {
+	if path == "." || path == r.config.Root {
+		return false
+	}
+	if len(r.exclusiveDirectories) > 0 {
+		for _, dir := range r.exclusiveDirectories {
+			if strings.HasPrefix(path, dir) {
+				return false
+			}
+		}
+		return true
+	}
+
 	for _, dir := range r.ignoredDirectories {
 		if dir == path {
 			return true

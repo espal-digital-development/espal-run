@@ -32,8 +32,7 @@ func (r *Runner) watchFolder(path string) error {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				// Ignore the MODIFY|ATTRIBUTE combination
-				if ev.IsModify() && ev.IsAttrib() {
+				if ev.IsAttrib() {
 					continue
 				}
 

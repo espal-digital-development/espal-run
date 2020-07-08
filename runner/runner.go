@@ -21,8 +21,9 @@ type Runner struct {
 	path   string
 	config *configYaml
 
-	// This is the final resolved list of directories (after wildcards are resolved)
-	ignoredDirectories []string
+	// These are the final resolved list of directories (after wildcards are resolved)
+	ignoredDirectories   []string
+	exclusiveDirectories []string
 
 	startChannel chan string
 	stopChannel  chan bool

@@ -15,19 +15,20 @@ import (
 const defaultBuildDelay = 600 * time.Millisecond
 
 type configYaml struct {
-	Root               string
-	TmpPath            string        `yaml:"tmpPath"`
-	BuildName          string        `yaml:"buildName"`
-	BuildLog           string        `yaml:"buildLog"`
-	VerboseWatching    bool          `yaml:"verboseWatching"`
-	SmartRebuildQtpl   bool          `yaml:"smartRebuildQtpl"`
-	ValidExtensions    []string      `yaml:"validExtensions"`
-	InvalidExtensions  []string      `yaml:"invalidExtensions"`
-	IgnoredFiles       []string      `yaml:"ignoredFiles"`
-	IgnoredDirectories []string      `yaml:"ignoredDirectories"`
-	BuildDelay         time.Duration `yaml:"buildDelay"`
-	Colorize           bool          `yaml:"colorize"`
-	LogColors          logColorsYaml `yaml:"logColors"`
+	Root                 string
+	TmpPath              string        `yaml:"tmpPath"`
+	BuildName            string        `yaml:"buildName"`
+	BuildLog             string        `yaml:"buildLog"`
+	VerboseWatching      bool          `yaml:"verboseWatching"`
+	SmartRebuildQtpl     bool          `yaml:"smartRebuildQtpl"`
+	ValidExtensions      []string      `yaml:"validExtensions"`
+	InvalidExtensions    []string      `yaml:"invalidExtensions"`
+	IgnoredFiles         []string      `yaml:"ignoredFiles"`
+	IgnoredDirectories   []string      `yaml:"ignoredDirectories"`
+	ExclusiveDirectories []string      `yaml:"exclusiveDirectories"`
+	BuildDelay           time.Duration `yaml:"buildDelay"`
+	Colorize             bool          `yaml:"colorize"`
+	LogColors            logColorsYaml `yaml:"logColors"`
 }
 
 type logColorsYaml struct {
@@ -40,23 +41,78 @@ type logColorsYaml struct {
 
 func (r *Runner) fillDefaultConfig() {
 	r.config = &configYaml{
-		Root:               ".",
-		TmpPath:            "./tmp",
-		BuildName:          "espal-core",
-		BuildLog:           "errors.log",
-		SmartRebuildQtpl:   true,
-		ValidExtensions:    []string{"go", "qtpl", "js", "css"},
-		InvalidExtensions:  []string{"tmp", "lock", "log", "yml", "json"},
-		IgnoredDirectories: []string{"tmp", "node_modules"},
-		IgnoredFiles:       []string{"*_test.go"},
-		BuildDelay:         defaultBuildDelay,
-		Colorize:           true,
+		Root:                 ".",
+		TmpPath:              "./tmp",
+		BuildName:            "espal-core",
+		BuildLog:             "errors.log",
+		SmartRebuildQtpl:     true,
+		ValidExtensions:      []string{"go", "qtpl", "js", "css"},
+		InvalidExtensions:    []string{"tmp", "lock", "log", "yml", "json"},
+		IgnoredDirectories:   []string{"tmp", "node_modules"},
+		IgnoredFiles:         []string{"*_test.go"},
+		ExclusiveDirectories: []string{},
+		BuildDelay:           defaultBuildDelay,
+		Colorize:             true,
 		LogColors: logColorsYaml{
 			Main:    "cyan",
 			Build:   "yellow",
 			Runner:  "green",
 			Watcher: "magenta",
 		},
+	}
+}
+
+func (r *Runner) buildIgnoredDirectories() {
+	r.ignoredDirectories = []string{}
+	for _, dir := range r.config.IgnoredDirectories {
+		dir := strings.TrimSpace(dir)
+		if strings.Contains(dir, "*") { // nolint:nestif
+			dirs, err := zglob.Glob(strings.TrimSpace(dir))
+			if err != nil {
+				r.runnerLog(err.Error())
+			}
+			if len(dirs) > 0 {
+				for _, matchedDir := range dirs {
+					stat, err := os.Stat(matchedDir)
+					if err != nil {
+						r.runnerLog(err.Error())
+					}
+					if stat.IsDir() {
+						r.ignoredDirectories = append(r.ignoredDirectories, matchedDir)
+					}
+				}
+			}
+		} else {
+			r.ignoredDirectories = append(r.ignoredDirectories, dir)
+		}
+	}
+}
+
+func (r *Runner) buildExclusiveDirectories() {
+	r.exclusiveDirectories = []string{}
+	for _, dir := range r.config.ExclusiveDirectories {
+		dir := strings.TrimSpace(dir)
+		if strings.Contains(dir, "*") { // nolint:nestif
+			dirs, err := zglob.Glob(strings.TrimSpace(dir))
+			if err != nil {
+				r.runnerLog(err.Error())
+			}
+			if len(dirs) > 0 {
+				for _, matchedDir := range dirs {
+					stat, err := os.Stat(matchedDir)
+					if err != nil {
+						r.runnerLog(err.Error())
+					}
+					if stat.IsDir() {
+						r.exclusiveDirectories = append(r.exclusiveDirectories, matchedDir)
+					}
+				}
+			}
+		} else {
+			r.exclusiveDirectories = append(r.exclusiveDirectories, dir)
+		}
+		// TODO :: Issue here that in-between parent directories are being skipped,
+		// but need to be resolved as well
 	}
 }
 
@@ -86,21 +142,8 @@ func (r *Runner) resolveConfig() error {
 		}
 	}
 
-	r.ignoredDirectories = []string{}
-	for _, dir := range r.config.IgnoredDirectories {
-		dir := strings.TrimSpace(dir)
-		if strings.Contains(dir, "*") {
-			dirs, err := zglob.Glob(strings.TrimSpace(dir))
-			if err != nil {
-				r.runnerLog(err.Error())
-			}
-			if len(dirs) > 0 {
-				r.ignoredDirectories = append(r.ignoredDirectories, dirs...)
-			}
-		} else {
-			r.ignoredDirectories = append(r.ignoredDirectories, dir)
-		}
-	}
+	r.buildIgnoredDirectories()
+	r.buildExclusiveDirectories()
 
 	r.config.TmpPath, err = filepath.Abs(r.config.TmpPath)
 	if err != nil {
