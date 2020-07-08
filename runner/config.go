@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const defaultBuildDelay = 300 * time.Millisecond
+const defaultBuildDelay = 600 * time.Millisecond
 
 type configYaml struct {
 	Root               string
