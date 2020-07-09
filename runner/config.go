@@ -16,10 +16,10 @@ const defaultBuildDelay = 600 * time.Millisecond
 
 type configYaml struct {
 	Root                 string
-	TmpPath              string        `yaml:"tmpPath"`
-	BuildName            string        `yaml:"buildName"`
-	BuildLog             string        `yaml:"buildLog"`
-	Verbosity            string        `yaml:"verbosity"`
+	TmpPath              string `yaml:"tmpPath"`
+	BuildName            string `yaml:"buildName"`
+	BuildLog             string `yaml:"buildLog"`
+	Verbosity            string
 	SmartRebuildQtpl     bool          `yaml:"smartRebuildQtpl"`
 	ValidExtensions      []string      `yaml:"validExtensions"`
 	InvalidExtensions    []string      `yaml:"invalidExtensions"`
@@ -27,7 +27,7 @@ type configYaml struct {
 	IgnoredDirectories   []string      `yaml:"ignoredDirectories"`
 	ExclusiveDirectories []string      `yaml:"exclusiveDirectories"`
 	BuildDelay           time.Duration `yaml:"buildDelay"`
-	Colorize             bool          `yaml:"colorize"`
+	Colorize             bool
 	LogColors            logColorsYaml `yaml:"logColors"`
 }
 
