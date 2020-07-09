@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/juju/errors"
@@ -26,6 +27,8 @@ type Runner struct {
 	exclusiveDirectories []string
 
 	totalWatchedFolders int
+	fileChecksums       map[string]string
+	checksumsMutex      *sync.RWMutex
 
 	startChannel chan string
 	stopChannel  chan bool
@@ -203,6 +206,9 @@ func (r *Runner) Start() error {
 func New() (*Runner, error) {
 	r := &Runner{
 		path: "espal-run.yml",
+
+		fileChecksums:  map[string]string{},
+		checksumsMutex: &sync.RWMutex{},
 
 		startChannel: make(chan string, startChannelSize),
 		stopChannel:  make(chan bool),

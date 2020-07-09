@@ -17,7 +17,7 @@ func (r *Runner) initFolders() error {
 	}
 	if os.IsNotExist(err) {
 		r.runnerLog("mkdir %s", r.config.TmpPath)
-		return errors.Trace(os.Mkdir(r.config.TmpPath, 0755))
+		return errors.Trace(os.Mkdir(r.config.TmpPath, 0700))
 	}
 	r.runnerLog("tmp dir already exists")
 	return nil

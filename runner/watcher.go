@@ -21,6 +21,25 @@ func (r *Runner) rebuildQtpl(path string) (bool, error) {
 	return true, nil
 }
 
+// returned bool indicates if the file at the given path has changed.
+func (r *Runner) validateChecksum(path string) (bool, error) {
+	r.checksumsMutex.RLock()
+	sum, ok := r.fileChecksums[path]
+	r.checksumsMutex.RUnlock()
+	sumBytes, err := exec.Command("md5", path).CombinedOutput()
+	if err != nil {
+		return false, errors.Trace(err)
+	}
+	fileSum := strings.Trim(strings.Split(string(sumBytes), " = ")[1], "\n")
+	if ok && sum == fileSum {
+		return false, nil
+	}
+	r.checksumsMutex.Lock()
+	r.fileChecksums[path] = fileSum
+	r.checksumsMutex.Unlock()
+	return true, nil
+}
+
 // nolint:gocognit
 func (r *Runner) watchFolder(path string) error {
 	watcher, err := fsnotify.NewWatcher()
@@ -36,6 +55,16 @@ func (r *Runner) watchFolder(path string) error {
 					continue
 				}
 
+				if ev.IsModify() {
+					isChanged, err := r.validateChecksum(ev.Name)
+					if err != nil {
+						r.fatal(err)
+					}
+					if !isChanged {
+						continue
+					}
+				}
+
 				isWatched, err := r.isWatchedFile(ev.Name)
 				if err != nil {
 					r.fatal(err)
@@ -43,10 +72,6 @@ func (r *Runner) watchFolder(path string) error {
 				if !isWatched {
 					continue
 				}
-
-				// TODO :: Make a buffer and check if the file was really changed (also clean the tmp buffer every boot)
-				// if ev.IsModify() {
-				// }
 
 				if r.config.SmartRebuildQtpl && strings.HasSuffix(ev.Name, ".qtpl") {
 					ok, err := r.rebuildQtpl(ev.Name)
