@@ -62,6 +62,15 @@ func (r *Runner) fillDefaultConfig() {
 	}
 }
 
+func (r *Runner) wildcardDirRootExists(path string) (string, bool, error) {
+	rootDir := strings.TrimSuffix(path, "/**/*")
+	stat, err := os.Stat(rootDir)
+	if err != nil && !os.IsNotExist(err) {
+		return "", false, errors.Trace(err)
+	}
+	return rootDir, !os.IsNotExist(err) && stat.IsDir(), nil
+}
+
 func (r *Runner) buildIgnoredDirectories() {
 	r.ignoredDirectories = []string{}
 	for _, dir := range r.config.IgnoredDirectories {
@@ -82,13 +91,12 @@ func (r *Runner) buildIgnoredDirectories() {
 					}
 				}
 			}
-			wildcardRootDir := strings.TrimSuffix(dir, "/**/*")
-			stat, err := os.Stat(wildcardRootDir)
-			if err != nil && !os.IsNotExist(err) {
+			rootDir, ok, err := r.wildcardDirRootExists(dir)
+			if err != nil {
 				r.runnerLog(err.Error())
 			}
-			if !os.IsNotExist(err) && stat.IsDir() {
-				r.ignoredDirectories = append(r.ignoredDirectories, wildcardRootDir)
+			if ok {
+				r.ignoredDirectories = append(r.ignoredDirectories, rootDir)
 			}
 		} else {
 			r.ignoredDirectories = append(r.ignoredDirectories, dir)
@@ -116,13 +124,12 @@ func (r *Runner) buildExclusiveDirectories() {
 					}
 				}
 			}
-			wildcardRootDir := strings.TrimSuffix(dir, "/**/*")
-			stat, err := os.Stat(wildcardRootDir)
-			if err != nil && !os.IsNotExist(err) {
+			rootDir, ok, err := r.wildcardDirRootExists(dir)
+			if err != nil {
 				r.runnerLog(err.Error())
 			}
-			if !os.IsNotExist(err) && stat.IsDir() {
-				r.exclusiveDirectories = append(r.exclusiveDirectories, wildcardRootDir)
+			if ok {
+				r.exclusiveDirectories = append(r.exclusiveDirectories, rootDir)
 			}
 		} else {
 			r.exclusiveDirectories = append(r.exclusiveDirectories, dir)
