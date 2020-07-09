@@ -40,7 +40,68 @@ func (r *Runner) validateChecksum(path string) (bool, error) {
 	return true, nil
 }
 
-// nolint:gocognit
+func (r *Runner) handleEvent(ev *fsnotify.FileEvent) bool {
+	if ev.IsAttrib() {
+		return false
+	}
+	isWatched, err := r.isWatchedFile(ev.Name)
+	if err != nil {
+		r.buildLog("watch check failed for %s: %s", ev.Name, err.Error())
+		return false
+	}
+	if !isWatched {
+		return false
+	}
+
+	if ev.IsModify() {
+		isChanged, err := r.validateChecksum(ev.Name)
+		if err != nil {
+			r.buildLog("md5 checksum failed for %s: %s", ev.Name, err.Error())
+		}
+		if !isChanged {
+			return false
+		}
+	}
+	if ev.IsCreate() {
+		stat, err := os.Stat(ev.Name)
+		if err != nil {
+			r.buildLog("filesize check failed for %s: %s", ev.Name, err.Error())
+		} else if stat.Size() == 0 {
+			// Add to the checksum buffer, so modify won't re-trigger if empty is re-saved
+			_, err := r.validateChecksum(ev.Name)
+			if err != nil {
+				r.buildLog("md5 checksum failed for %s: %s", ev.Name, err.Error())
+			}
+			return false
+		}
+	}
+	if ev.IsDelete() {
+		r.checksumsMutex.RLock()
+		_, ok := r.fileChecksums[ev.Name]
+		r.checksumsMutex.RUnlock()
+		if ok {
+			r.checksumsMutex.Lock()
+			delete(r.fileChecksums, ev.Name)
+			r.checksumsMutex.Unlock()
+		}
+	}
+
+	if r.config.SmartRebuildQtpl && strings.HasSuffix(ev.Name, ".qtpl") {
+		ok, err := r.rebuildQtpl(ev.Name)
+		if err != nil {
+			r.watcherLog("QuickTemplate compilation failed: %s", err.Error())
+			return false
+		}
+		if !ok {
+			return false
+		}
+		if r.verbosity >= verbosityNormal {
+			r.watcherLog("Recompiled %s", ev.Name)
+		}
+	}
+	return true
+}
+
 func (r *Runner) watchFolder(path string) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -51,39 +112,12 @@ func (r *Runner) watchFolder(path string) error {
 		for {
 			select {
 			case ev := <-watcher.Event:
-				if ev.IsAttrib() {
+				if propagate := r.handleEvent(ev); !propagate {
 					continue
 				}
-				isWatched, err := r.isWatchedFile(ev.Name)
-				if err != nil {
-					r.fatal(err)
+				if r.verbosity >= verbosityQuiet {
+					r.watcherLog("sending event %s", ev)
 				}
-				if !isWatched {
-					continue
-				}
-
-				if ev.IsModify() {
-					isChanged, err := r.validateChecksum(ev.Name)
-					if err != nil {
-						r.buildLog("md5 checksum failed for %s: %s", ev.Name, err.Error())
-					}
-					if !isChanged {
-						continue
-					}
-				}
-
-				if r.config.SmartRebuildQtpl && strings.HasSuffix(ev.Name, ".qtpl") {
-					ok, err := r.rebuildQtpl(ev.Name)
-					if err != nil {
-						r.fatal(err)
-					}
-					if !ok {
-						continue
-					}
-					r.watcherLog("Rebuild %s", ev.Name)
-				}
-
-				r.watcherLog("sending event %s", ev)
 				r.startChannel <- ev.String()
 			case err := <-watcher.Error:
 				r.watcherLog("error: %s", err)
@@ -91,7 +125,7 @@ func (r *Runner) watchFolder(path string) error {
 		}
 	}(r)
 
-	if r.config.VerboseWatching {
+	if r.verbosity >= verbosityVerbose {
 		r.watcherLog("Watching %s", path)
 	}
 
@@ -132,7 +166,7 @@ func (r *Runner) watch() error {
 		}
 
 		if r.isIgnoredFolder(path) {
-			if r.config.VerboseWatching {
+			if r.verbosity >= verbosityVerbose {
 				r.watcherLog("Ignoring %s", path)
 			}
 			return filepath.SkipDir

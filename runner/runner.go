@@ -22,6 +22,8 @@ type Runner struct {
 	path   string
 	config *configYaml
 
+	verbosity uint8
+
 	// These are the final resolved list of directories (after wildcards are resolved)
 	ignoredDirectories   []string
 	exclusiveDirectories []string
@@ -49,7 +51,9 @@ func (r *Runner) SetPath(path string) error {
 }
 
 func (r *Runner) run() (bool, error) {
-	r.runnerLog("Running...")
+	if r.verbosity >= verbosityNormal {
+		r.runnerLog("Running...")
+	}
 
 	cmd := exec.Command(r.buildPath())
 	stderr, err := cmd.StderrPipe()
@@ -70,7 +74,9 @@ func (r *Runner) run() (bool, error) {
 	go func(r *Runner) {
 		<-r.stopChannel
 		pid := cmd.Process.Pid
-		r.runnerLog("Killing PID %d", pid)
+		if r.verbosity >= verbosityVerbose {
+			r.runnerLog("Killing PID %d", pid)
+		}
 		if err := cmd.Process.Kill(); err != nil {
 			r.runnerLog("Process kill failed %s", err.Error())
 		}
@@ -103,7 +109,9 @@ func (r *Runner) buildErrorsFilePath() string {
 }
 
 func (r *Runner) build() (string, bool, error) {
-	r.buildLog("Building...")
+	if r.verbosity >= verbosityQuiet {
+		r.buildLog("Building...")
+	}
 	cmd := exec.Command("go", "build", "-o", r.buildPath(), r.config.Root)
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
@@ -135,22 +143,27 @@ func (r *Runner) start() {
 	go func(r *Runner) {
 		for {
 			loopIndex++
-			r.mainLog("Waiting (loop %d)...", loopIndex)
+			if r.verbosity >= verbosityNormal {
+				r.mainLog("Waiting (loop %d)...", loopIndex)
+			}
 			eventName := <-r.startChannel
-
-			r.mainLog("receiving first event %s", eventName)
-			r.mainLog("sleeping for %d milliseconds", buildDelay/1e6) // nolint:gomnd
+			if r.verbosity >= verbosityNormal {
+				r.mainLog("receiving first event %s", eventName)
+				r.mainLog("sleeping for %d milliseconds", buildDelay/1e6) // nolint:gomnd
+			}
 			time.Sleep(buildDelay)
-			r.mainLog("flushing events")
-
+			if r.verbosity >= verbosityNormal {
+				r.mainLog("flushing events")
+			}
 			r.flushEvents()
 
-			r.mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
+			if r.verbosity >= verbosityNormal {
+				r.mainLog("Started! (%d Goroutines)", runtime.NumGoroutine())
+			}
 			err := r.removeBuildErrorsLog()
 			if err != nil {
 				r.mainLog(err.Error())
 			}
-
 			buildFailed := false
 			if r.shouldRebuild(eventName) { // nolint:nestif
 				errorMessage, ok, err := r.build()
@@ -167,7 +180,6 @@ func (r *Runner) start() {
 					r.createBuildErrorsLog(errorMessage)
 				}
 			}
-
 			if !buildFailed {
 				if started {
 					r.stopChannel <- true
@@ -176,9 +188,10 @@ func (r *Runner) start() {
 					r.mainLog("Run Failed: \n %s", err.Error())
 				}
 			}
-
 			started = true
-			r.mainLog(strings.Repeat("-", 20))
+			if r.verbosity >= verbosityQuiet {
+				r.mainLog(strings.Repeat("-", 20))
+			}
 		}
 	}(r)
 }
@@ -193,7 +206,9 @@ func (r *Runner) Start() error {
 		return errors.Trace(err)
 	}
 
-	r.mainLog("Watching %d folders..", r.totalWatchedFolders)
+	if r.verbosity >= verbosityNormal {
+		r.mainLog("Watching %d folders..", r.totalWatchedFolders)
+	}
 
 	r.start()
 	r.startChannel <- "/"

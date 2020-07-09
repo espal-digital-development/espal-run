@@ -8,6 +8,13 @@ import (
 	"github.com/juju/errors"
 )
 
+const (
+	verbositySilent uint8 = iota + 1
+	verbosityQuiet
+	verbosityNormal
+	verbosityVerbose
+)
+
 type logFunc func(string, ...interface{})
 
 func (r *Runner) newLogFunc(prefix string) func(string, ...interface{}) {
@@ -24,10 +31,6 @@ func (r *Runner) newLogFunc(prefix string) func(string, ...interface{}) {
 		format = fmt.Sprintf("%s%s %s |%s %s", color, timeString, prefix, clear, format)
 		r.logger.Printf(format, v...)
 	}
-}
-
-func (r *Runner) fatal(err error) {
-	r.logger.Fatal(errors.ErrorStack(err))
 }
 
 type appLogWriter struct {
@@ -53,9 +56,9 @@ func (r *Runner) logColor(logName string) string {
 	case "app":
 		return r.logColors[r.config.LogColors.App]
 	default:
-		r.fatal(errors.Errorf("unsupported logName `%s`", logName))
+		r.mainLog("unsupported logName `%s`", logName)
+		return r.logColors[r.config.LogColors.Main]
 	}
-	return ""
 }
 
 func (r *Runner) createBuildErrorsLog(message string) bool {
@@ -70,5 +73,9 @@ func (r *Runner) createBuildErrorsLog(message string) bool {
 }
 
 func (r *Runner) removeBuildErrorsLog() error {
-	return errors.Trace(os.Remove(r.buildErrorsFilePath()))
+	err := os.Remove(r.buildErrorsFilePath())
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return errors.Trace(err)
 }

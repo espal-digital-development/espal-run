@@ -50,7 +50,9 @@ const (
 var (
 	cwd         string
 	runChecks   bool
+	allSkips    bool
 	skipQTC     bool
+	skipDB      bool
 	resetDB     bool
 	dbPortStart int
 	dbNodes     int
@@ -58,7 +60,9 @@ var (
 
 func parseFlags() {
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
+	flag.BoolVar(&allSkips, "all-skips", false, "Enable all available skips: skip-qtc, skip-db")
 	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
+	flag.BoolVar(&skipDB, "skip-db", false, "Don't run the Cockroach checks, installer and starter")
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
 	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
@@ -81,17 +85,17 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-
 	if err := setSoftUlimit(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-
 	if err := checkSSL(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	if err := cockroachSetup(randomString); err != nil {
-		log.Fatal(errors.ErrorStack(err))
+	if !allSkips && !skipDB {
+		if err := cockroachSetup(randomString); err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
 	}
 	storeIntegrity, err := storeintegrity.New()
 	if err != nil {
@@ -103,7 +107,7 @@ func main() {
 	}
 
 	installPackages()
-	if !skipQTC {
+	if !allSkips && !skipQTC {
 		qtcBuilder, err := qtcbuilder.New()
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))

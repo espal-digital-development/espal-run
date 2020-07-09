@@ -19,7 +19,7 @@ type configYaml struct {
 	TmpPath              string        `yaml:"tmpPath"`
 	BuildName            string        `yaml:"buildName"`
 	BuildLog             string        `yaml:"buildLog"`
-	VerboseWatching      bool          `yaml:"verboseWatching"`
+	Verbosity            string        `yaml:"verbosity"`
 	SmartRebuildQtpl     bool          `yaml:"smartRebuildQtpl"`
 	ValidExtensions      []string      `yaml:"validExtensions"`
 	InvalidExtensions    []string      `yaml:"invalidExtensions"`
@@ -45,6 +45,7 @@ func (r *Runner) fillDefaultConfig() {
 		TmpPath:              "./tmp",
 		BuildName:            "espal-core",
 		BuildLog:             "errors.log",
+		Verbosity:            "normal",
 		SmartRebuildQtpl:     true,
 		ValidExtensions:      []string{"go", "qtpl", "js", "css"},
 		InvalidExtensions:    []string{"tmp", "lock", "log", "yml", "json"},
@@ -137,6 +138,26 @@ func (r *Runner) buildExclusiveDirectories() {
 	}
 }
 
+func (r *Runner) resolveVerbosity() error {
+	supported := map[string]uint8{
+		"verbose": verbosityVerbose,
+		"normal":  verbosityNormal,
+		"quiet":   verbosityQuiet,
+		"silent":  verbositySilent,
+	}
+	var ok bool
+	r.verbosity, ok = supported[r.config.Verbosity]
+	if !ok {
+		mapsKeys := []string{}
+		for k := range supported {
+			mapsKeys = append(mapsKeys, k)
+		}
+		return errors.Errorf("unsupported verbostiy `%s`. Supported are `%s`",
+			r.config.Verbosity, strings.Join(mapsKeys, ", "))
+	}
+	return nil
+}
+
 func (r *Runner) resolveConfig() error {
 	if _, err := os.Stat(r.path); err != nil {
 		return errors.Trace(err)
@@ -165,6 +186,10 @@ func (r *Runner) resolveConfig() error {
 
 	r.buildIgnoredDirectories()
 	r.buildExclusiveDirectories()
+
+	if err := r.resolveVerbosity(); err != nil {
+		return errors.Trace(err)
+	}
 
 	r.config.TmpPath, err = filepath.Abs(r.config.TmpPath)
 	if err != nil {

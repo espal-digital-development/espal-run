@@ -10,16 +10,22 @@ import (
 )
 
 func (r *Runner) initFolders() error {
-	r.runnerLog("InitFolders")
+	if r.verbosity >= verbosityVerbose {
+		r.runnerLog("InitFolders")
+	}
 	_, err := os.Stat(r.config.TmpPath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		r.runnerLog("mkdir %s", r.config.TmpPath)
+		if r.verbosity >= verbosityVerbose {
+			r.runnerLog("mkdir %s", r.config.TmpPath)
+		}
 		return errors.Trace(os.Mkdir(r.config.TmpPath, 0700))
 	}
-	r.runnerLog("tmp dir already exists")
+	if r.verbosity >= verbosityVerbose {
+		r.runnerLog("tmp dir already exists")
+	}
 	return nil
 }
 
