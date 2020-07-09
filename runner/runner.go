@@ -25,6 +25,8 @@ type Runner struct {
 	ignoredDirectories   []string
 	exclusiveDirectories []string
 
+	totalWatchedFolders int
+
 	startChannel chan string
 	stopChannel  chan bool
 
@@ -187,6 +189,8 @@ func (r *Runner) Start() error {
 	if err := r.watch(); err != nil {
 		return errors.Trace(err)
 	}
+
+	r.mainLog("Watching %d folders..", r.totalWatchedFolders)
 
 	r.start()
 	r.startChannel <- "/"

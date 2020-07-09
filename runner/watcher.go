@@ -74,10 +74,23 @@ func (r *Runner) watchFolder(path string) error {
 	if err := watcher.Watch(path); err != nil {
 		return errors.Trace(err)
 	}
+	r.totalWatchedFolders++
 	return nil
 }
 
 func (r *Runner) watch() error {
+	if len(r.exclusiveDirectories) > 0 {
+		for _, dir := range r.exclusiveDirectories {
+			if r.isIgnoredFolder(dir) {
+				continue
+			}
+			if err := r.watchFolder(dir); err != nil {
+				return errors.Trace(err)
+			}
+		}
+		return nil
+	}
+
 	return filepath.Walk(r.config.Root, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			return nil

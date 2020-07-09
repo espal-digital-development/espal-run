@@ -108,11 +108,17 @@ func (r *Runner) buildExclusiveDirectories() {
 					}
 				}
 			}
+			wildcardRootDir := strings.TrimSuffix(dir, "/**/*")
+			stat, err := os.Stat(wildcardRootDir)
+			if err != nil {
+				r.runnerLog(err.Error())
+			}
+			if stat.IsDir() {
+				r.exclusiveDirectories = append(r.exclusiveDirectories, wildcardRootDir)
+			}
 		} else {
 			r.exclusiveDirectories = append(r.exclusiveDirectories, dir)
 		}
-		// TODO :: Issue here that in-between parent directories are being skipped,
-		// but need to be resolved as well
 	}
 }
 

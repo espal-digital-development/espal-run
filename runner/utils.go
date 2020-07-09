@@ -33,18 +33,6 @@ func (r *Runner) isTmpDir(path string) (bool, error) {
 }
 
 func (r *Runner) isIgnoredFolder(path string) bool {
-	if path == "." || path == r.config.Root {
-		return false
-	}
-	if len(r.exclusiveDirectories) > 0 {
-		for _, dir := range r.exclusiveDirectories {
-			if strings.HasPrefix(path, dir) {
-				return false
-			}
-		}
-		return true
-	}
-
 	for _, dir := range r.ignoredDirectories {
 		if dir == path {
 			return true
@@ -104,19 +92,4 @@ func (r *Runner) shouldRebuild(eventName string) bool {
 		}
 	}
 	return true
-}
-
-func (r *Runner) createBuildErrorsLog(message string) bool {
-	file, err := os.Create(r.buildErrorsFilePath())
-	if err != nil {
-		return false
-	}
-	if _, err := file.WriteString(message); err != nil {
-		return false
-	}
-	return true
-}
-
-func (r *Runner) removeBuildErrorsLog() error {
-	return errors.Trace(os.Remove(r.buildErrorsFilePath()))
 }

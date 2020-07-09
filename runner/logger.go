@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/juju/errors"
@@ -55,4 +56,19 @@ func (r *Runner) logColor(logName string) string {
 		r.fatal(errors.Errorf("unsupported logName `%s`", logName))
 	}
 	return ""
+}
+
+func (r *Runner) createBuildErrorsLog(message string) bool {
+	file, err := os.Create(r.buildErrorsFilePath())
+	if err != nil {
+		return false
+	}
+	if _, err := file.WriteString(message); err != nil {
+		return false
+	}
+	return true
+}
+
+func (r *Runner) removeBuildErrorsLog() error {
+	return errors.Trace(os.Remove(r.buildErrorsFilePath()))
 }
