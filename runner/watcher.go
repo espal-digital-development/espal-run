@@ -54,23 +54,22 @@ func (r *Runner) watchFolder(path string) error {
 				if ev.IsAttrib() {
 					continue
 				}
-
-				if ev.IsModify() {
-					isChanged, err := r.validateChecksum(ev.Name)
-					if err != nil {
-						r.fatal(err)
-					}
-					if !isChanged {
-						continue
-					}
-				}
-
 				isWatched, err := r.isWatchedFile(ev.Name)
 				if err != nil {
 					r.fatal(err)
 				}
 				if !isWatched {
 					continue
+				}
+
+				if ev.IsModify() {
+					isChanged, err := r.validateChecksum(ev.Name)
+					if err != nil {
+						r.buildLog("md5 checksum failed for %s: %s", ev.Name, err.Error())
+					}
+					if !isChanged {
+						continue
+					}
 				}
 
 				if r.config.SmartRebuildQtpl && strings.HasSuffix(ev.Name, ".qtpl") {
