@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/howeyc/fsnotify"
@@ -26,11 +27,27 @@ func (r *Runner) validateChecksum(path string) (bool, error) {
 	r.checksumsMutex.RLock()
 	sum, ok := r.fileChecksums[path]
 	r.checksumsMutex.RUnlock()
-	sumBytes, err := exec.Command("md5", path).CombinedOutput()
+
+	var sumBytes []byte
+	var err error
+
+	if runtime.GOOS == "windows" {
+		sumBytes, err = exec.Command("certutil", "-hashfile", path, "MD5").CombinedOutput()
+	} else {
+		sumBytes, err = exec.Command("md5", path).CombinedOutput()
+	}
+
 	if err != nil {
 		return false, errors.Trace(err)
 	}
-	fileSum := strings.Trim(strings.Split(string(sumBytes), " = ")[1], "\n")
+
+	var fileSum string
+	if runtime.GOOS == "windows" {
+		fileSum = strings.Split(string(sumBytes), "\n")[1]
+	} else {
+		fileSum = strings.Trim(strings.Split(string(sumBytes), " = ")[1], "\n")
+	}
+
 	if ok && sum == fileSum {
 		return false, nil
 	}

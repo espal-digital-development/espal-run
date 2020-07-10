@@ -7,8 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"runtime"
-	"syscall"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -186,19 +184,6 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 func installPackages() {
 	qtc := gopackage.New("github.com/valyala/quicktemplate/qtc")
 	qtc.InstallIfNeeded(true)
-}
-
-func setSoftUlimit() error {
-	if runtime.GOOS == "darwin" {
-		var rLimit syscall.Rlimit
-		rLimit.Max = 10000
-		rLimit.Cur = 10000
-		err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-		if err != nil {
-			return errors.Trace(err)
-		}
-	}
-	return nil
 }
 
 func runAllChecks() {
