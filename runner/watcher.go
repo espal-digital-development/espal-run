@@ -12,6 +12,8 @@ import (
 	"github.com/juju/errors"
 )
 
+const windowsOS = "windows"
+
 func (r *Runner) rebuildQtpl(path string) (bool, error) {
 	cmd := exec.Command("qtc", "-file", path)
 	out, err := cmd.CombinedOutput()
@@ -31,7 +33,7 @@ func (r *Runner) validateChecksum(path string) (bool, error) {
 	var sumBytes []byte
 	var err error
 
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windowsOS {
 		sumBytes, err = exec.Command("certutil", "-hashfile", path, "MD5").CombinedOutput()
 	} else {
 		sumBytes, err = exec.Command("md5", path).CombinedOutput()
@@ -42,7 +44,7 @@ func (r *Runner) validateChecksum(path string) (bool, error) {
 	}
 
 	var fileSum string
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == windowsOS {
 		fileSum = strings.Split(string(sumBytes), "\n")[1]
 	} else {
 		fileSum = strings.Trim(strings.Split(string(sumBytes), " = ")[1], "\n")

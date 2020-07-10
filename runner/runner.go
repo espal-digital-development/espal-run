@@ -98,7 +98,7 @@ func (r *Runner) flushEvents() {
 
 func (r *Runner) buildPath() string {
 	p := filepath.Join(r.config.TmpPath, r.config.BuildName)
-	if runtime.GOOS == "windows" && filepath.Ext(p) != ".exe" {
+	if runtime.GOOS == windowsOS && filepath.Ext(p) != ".exe" {
 		p += ".exe"
 	}
 	return p
