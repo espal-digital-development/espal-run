@@ -169,6 +169,9 @@ func (r *Runner) watch() error {
 	}
 
 	return filepath.Walk(r.config.Root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return errors.Trace(err)
+		}
 		if !info.IsDir() {
 			return nil
 		}
