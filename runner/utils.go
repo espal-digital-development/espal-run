@@ -34,13 +34,12 @@ func (r *Runner) isTmpDir(path string) (bool, error) {
 	if err != nil {
 		return false, errors.Trace(err)
 	}
-
 	return absolutePath == r.config.TmpPath, nil
 }
 
 func (r *Runner) isIgnoredFolder(path string) bool {
-	for _, dir := range r.ignoredDirectories {
-		if dir == path {
+	for k := range r.ignoredDirectories {
+		if r.ignoredDirectories[k] == path {
 			return true
 		}
 	}
@@ -91,9 +90,9 @@ func (r *Runner) isWatchedFile(path string) (bool, error) {
 }
 
 func (r *Runner) shouldRebuild(eventName string) bool {
-	for _, e := range r.config.InvalidExtensions {
-		fileName := strings.Replace(strings.Split(eventName, ":")[0], `"`, "", -1)
-		if strings.HasSuffix(fileName, e) {
+	fileName := strings.Replace(strings.Split(eventName, ":")[0], `"`, "", -1)
+	for k := range r.config.InvalidExtensions {
+		if strings.HasSuffix(fileName, r.config.InvalidExtensions[k]) {
 			return false
 		}
 	}

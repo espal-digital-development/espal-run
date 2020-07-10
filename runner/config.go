@@ -82,13 +82,13 @@ func (r *Runner) buildIgnoredDirectories() {
 				r.runnerLog(err.Error())
 			}
 			if len(dirs) > 0 {
-				for _, matchedDir := range dirs {
-					stat, err := os.Stat(matchedDir)
+				for k := range dirs {
+					stat, err := os.Stat(dirs[k])
 					if err != nil {
 						r.runnerLog(err.Error())
 					}
 					if stat.IsDir() {
-						r.ignoredDirectories = append(r.ignoredDirectories, matchedDir)
+						r.ignoredDirectories = append(r.ignoredDirectories, dirs[k])
 					}
 				}
 			}
@@ -115,13 +115,13 @@ func (r *Runner) buildExclusiveDirectories() {
 				r.runnerLog(err.Error())
 			}
 			if len(dirs) > 0 {
-				for _, matchedDir := range dirs {
-					stat, err := os.Stat(matchedDir)
+				for k := range dirs {
+					stat, err := os.Stat(dirs[k])
 					if err != nil {
 						r.runnerLog(err.Error())
 					}
 					if stat.IsDir() {
-						r.exclusiveDirectories = append(r.exclusiveDirectories, matchedDir)
+						r.exclusiveDirectories = append(r.exclusiveDirectories, dirs[k])
 					}
 				}
 			}
