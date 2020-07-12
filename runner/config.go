@@ -159,18 +159,20 @@ func (r *Runner) resolveVerbosity() error {
 }
 
 func (r *Runner) resolveConfig() error {
-	if _, err := os.Stat(r.path); err != nil {
-		return errors.Trace(err)
-	}
-	bytes, err := ioutil.ReadFile(r.path)
-	if err != nil {
-		return errors.Trace(err)
-	}
-
 	r.fillDefaultConfig()
 
-	if err := yaml.Unmarshal(bytes, r.config); err != nil {
+	_, err := os.Stat(r.path)
+	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
+	}
+	if !os.IsNotExist(err) {
+		bytes, err := ioutil.ReadFile(r.path)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if err := yaml.Unmarshal(bytes, r.config); err != nil {
+			return errors.Trace(err)
+		}
 	}
 
 	for k := range r.config.ValidExtensions {
