@@ -80,6 +80,7 @@ func (c *ConfigChecker) Do() error {
 			if err != nil {
 				return errors.Trace(err)
 			}
+			// TODO :: 777777 Default fallback didn't happened for email.noReplyAddress?
 			value = strings.Trim(value, "\n")
 			if value == "" {
 				if configRequest.DefaultOption == "" {

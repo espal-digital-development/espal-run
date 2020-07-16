@@ -35,6 +35,8 @@ import (
 
 // TODO :: Check macOS Homebrew installed
 
+// TODO :: 777777 Mutli-OS install pngquant
+
 const (
 	randomPasswordLength    = 32
 	defaultServerPath       = "./app/server"
