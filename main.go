@@ -27,17 +27,14 @@ import (
 // chosen in the config.yml. If they are totally different; it may cause
 // discrepancies for this command.
 
-// TODO :: Detect not being in a project directory. Or maybe give flag
-// option to target the project directory/directories.
-
 // TODO :: Security inspections of the area where the espal app is ran.
 // Check mod values and if the environment has dangerous settings set.
 
 // TODO :: Add support for blending xargs parameters and ENV variables.
 
-// TODO :: Check macOS Homebrew installed
+// TODO :: Check macOS Homebrew installed.
 
-// TODO :: 777777 Mutli-OS install pngquant
+// TODO :: 777777 Mutli-OS install pngquant/jpegoptim/gifsicle/svgo.
 
 const (
 	randomPasswordLength    = 32
@@ -56,8 +53,7 @@ var (
 	appPath           string
 	fullConfigFile    bool
 	runChecks         bool
-	allSkips          bool
-	skipQTC           bool
+	runQTC            bool
 	skipDB            bool
 	resetDB           bool
 	dbPortStart       int
@@ -70,8 +66,7 @@ func parseFlags() {
 	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with "+
 		"default values, unless overridden by the prompter")
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
-	flag.BoolVar(&allSkips, "all-skips", false, "Enable all available skips: skip-qtc, skip-db")
-	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
+	flag.BoolVar(&runQTC, "run-qtc", false, "Run the QuickTemplate Compiler")
 	flag.BoolVar(&skipDB, "skip-db", false, "Don't run the Cockroach checks, installer and starter")
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
 	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
@@ -137,7 +132,7 @@ func main() {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
-	if !allSkips && !skipDB {
+	if !skipDB {
 		if err := cockroachSetup(randomString); err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
@@ -152,7 +147,7 @@ func main() {
 	}
 
 	installPackages()
-	if !allSkips && !skipQTC {
+	if runQTC {
 		qtcBuilder, err := qtcbuilder.New()
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
