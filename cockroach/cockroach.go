@@ -8,6 +8,8 @@ import (
 	"github.com/juju/errors"
 )
 
+const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to installing.."
+
 type Cockroach struct {
 	desiredNodes  int
 	host          string

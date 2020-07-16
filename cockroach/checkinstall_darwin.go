@@ -1,4 +1,4 @@
-// +build !windows
+// +build darwin
 
 package cockroach
 
@@ -9,8 +9,6 @@ import (
 
 	"github.com/juju/errors"
 )
-
-const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to installing.."
 
 func (c *Cockroach) checkInstall() error {
 	out, _ := exec.Command("which", "cockroach").CombinedOutput()

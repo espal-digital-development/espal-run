@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
@@ -51,6 +53,7 @@ const (
 var (
 	cwd               string
 	createProjectPath string
+	appPath           string
 	fullConfigFile    bool
 	runChecks         bool
 	allSkips          bool
@@ -63,7 +66,9 @@ var (
 
 func parseFlags() {
 	flag.StringVar(&createProjectPath, "create-project", "", "Create a new espal app project")
-	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with default values, unless overriden by the prompter")
+	flag.StringVar(&appPath, "app-path", "", "Target app path")
+	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with "+
+		"default values, unless overridden by the prompter")
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
 	flag.BoolVar(&allSkips, "all-skips", false, "Enable all available skips: skip-qtc, skip-db")
 	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
@@ -80,13 +85,17 @@ func setCwd() error {
 	return errors.Trace(err)
 }
 
+// nolint:funlen,gocognit
 func main() {
 	parseFlags()
-	if err := setCwd(); err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
 
+	// nolint:nestif
 	if createProjectPath != "" {
+		var err error
+		createProjectPath, err = filepath.Abs(filepath.FromSlash(createProjectPath))
+		if err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
 		projectCreator, err := projectcreator.New()
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
@@ -94,6 +103,27 @@ func main() {
 		if err := projectCreator.Do(createProjectPath); err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
+	} else if appPath != "" {
+		var err error
+		appPath, err = filepath.Abs(appPath)
+		if err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
+		if err := os.Chdir(appPath); err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
+	}
+
+	if err := setCwd(); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+
+	ok, err := pathIsAnApp(cwd)
+	if err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	if !ok {
+		log.Fatalf("there doesn't seem to be an app at %s", cwd)
 	}
 
 	randomString, err := randomstring.New()
@@ -151,6 +181,25 @@ func main() {
 	if err := appRunner.Start(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
+}
+
+func pathIsAnApp(path string) (bool, error) {
+	modFilePath := filepath.FromSlash(path + "/go.mod")
+	_, err := os.Stat(modFilePath)
+	if err != nil && !os.IsNotExist(err) {
+		return false, errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	data, err := ioutil.ReadFile(modFilePath)
+	if err != nil {
+		return false, errors.Trace(err)
+	}
+	if bytes.Contains(data, []byte("github.com/espal-digital-development/espal-core")) {
+		return true, nil
+	}
+	return false, nil
 }
 
 func checkSSL() error {

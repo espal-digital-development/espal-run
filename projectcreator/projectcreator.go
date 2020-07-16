@@ -14,11 +14,6 @@ type ProjectCreator struct {
 }
 
 func (c *ProjectCreator) Do(path string) error {
-	var err error
-	path, err = filepath.Abs(filepath.FromSlash(path))
-	if err != nil {
-		return errors.Trace(err)
-	}
 	stat, err := os.Stat(path)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
@@ -33,7 +28,7 @@ func (c *ProjectCreator) Do(path string) error {
 		return errors.Errorf("%s already exists, and is not a directory")
 	}
 
-	if err := ioutil.WriteFile(filepath.FromSlash(path+"/.gitignore"), espalRunFile, 0600); err != nil {
+	if err := ioutil.WriteFile(filepath.FromSlash(path+"/.gitignore"), gitIgnoreFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
 	if err := ioutil.WriteFile(filepath.FromSlash(path+"/espal-run.yml"), espalRunFile, 0600); err != nil {

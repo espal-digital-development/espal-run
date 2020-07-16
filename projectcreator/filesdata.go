@@ -1,5 +1,6 @@
 package projectcreator
 
+// nolint:gonocheckglobals
 var (
 	gitIgnoreFile = []byte(`/app/database
 /app/server

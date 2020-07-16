@@ -16,7 +16,7 @@ func (c *Cockroach) checkInstall() error {
 	// and fetch that (max) version binary.
 	// TODO :: Ask the user if saving to the dbDirpath is OK? Otherwise they might
 	// give another path.
-	packageName := "cockroach-v20.1.2.windows-6.2-amd64"
+	packageName := "cockroach-v20.1.3.windows-6.2-amd64"
 	zipURL := "https://binaries.cockroachdb.com/" + packageName + ".zip"
 	dbDirPath, err := filepath.Abs("/CockroachDB")
 	if err != nil {
