@@ -1,0 +1,1 @@
+package configchecker_test
