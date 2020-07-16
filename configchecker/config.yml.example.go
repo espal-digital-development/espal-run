@@ -65,6 +65,10 @@ assets:
   brotli: true
   gzipFiles: true
   brotliFiles: true
+  optimizePngs: true
+  optimizeJpegs: true
+  optimizeGifs: true
+  optimizeSvgs: true
   cacheMaxAge: 60
 paths:
   server:
