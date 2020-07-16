@@ -6,7 +6,7 @@ var (
 /tmp
 `)
 	espalRunFile = []byte(`verbosity: quiet
-ignoredDirectories: ['tmp', 'app/assets/vue/**/*', 'app/database/**/*', 'node_modules', '*/**/_data']
+ignoredDirectories: ['tmp', 'app/assets/vue/**/*', 'app/database/**/*', 'node_modules']
 exclusiveDirectories: ['app/assets/**/*'] # This will ignore other inclusion rules
 `)
 	mainGoFile = []byte(`package main
