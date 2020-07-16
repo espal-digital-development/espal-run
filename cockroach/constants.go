@@ -1,5 +1,3 @@
-// +build !windows
-
 package cockroach
 
 const (
@@ -8,8 +6,6 @@ const (
 
 	defaultPortStart     = 36257
 	defaultHTTPPortStart = 36080
-
-	secondsIntervalBetweenNodesStart = 3
 
 	cockroachCreatingNewDatabase          = "Creating a new cockroach database.."
 	cockroachResettingDatabase            = "Resetting the cockroach database.."

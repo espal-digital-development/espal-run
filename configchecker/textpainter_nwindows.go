@@ -1,10 +1,6 @@
-package configchecker
+// +build !windows
 
-type textPainter struct {
-	reset     string
-	lightBlue string
-	darkBlue  string
-}
+package configchecker
 
 func (p *textPainter) resolveDefaults() {
 }

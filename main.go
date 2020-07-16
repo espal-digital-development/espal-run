@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"syscall"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -220,15 +219,4 @@ func runAllChecks() {
 	if !bytes.Contains(out, []byte("There are no problems")) {
 		log.Println(string(out))
 	}
-}
-
-func setSoftUlimit() error {
-	var rLimit syscall.Rlimit
-	rLimit.Max = 20000
-	rLimit.Cur = 20000
-	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
-	if err != nil {
-		return errors.Trace(err)
-	}
-	return nil
 }
