@@ -12,7 +12,7 @@ func (p *textPainter) resolveDefaults() {
 	setConsoleModeProc := kernel32.NewProc("SetConsoleMode")
 	handle := syscall.Handle(os.Stdout.Fd())
 
-	_, _, err := setConsoleModeProc.Call(uintptr(handle), 0x0001|0x0002|0x0004)
+	_, _, err := setConsoleModeProc.Call(uintptr(handle), 0x0001|0x0002|0x0004) // nolint:gomnd
 
 	if err != nil && err.Error() != "De bewerking is voltooid." && err.Error() != "The operation completed successfully." {
 		p.reset = ""

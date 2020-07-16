@@ -50,6 +50,7 @@ func (c *ConfigChecker) SetPath(path string) {
 
 // TODO :: Show explanation and info about SMTP server (local or services like Mailtrap)
 
+// nolint:funlen,gocognit
 func (c *ConfigChecker) Do() error {
 	_, err := os.Stat(c.path)
 	if err != nil && !os.IsNotExist(err) {
@@ -114,20 +115,21 @@ func (c *ConfigChecker) Do() error {
 	for _, configRequest := range configToRequest {
 		output = bytes.Replace(output, []byte(configRequest.Tag), []byte(configRequest.Value), 1)
 	}
-
 	if err := ioutil.WriteFile(c.path, output, 0600); err != nil {
 		return errors.Trace(err)
 	}
-
-	// Generate the default assets files public/private if they don't exist
-	if err := c.generateDirIfNotExist(defaultAssetsFilesPublic); err != nil {
-		return errors.Trace(err)
-	}
-	if err := c.generateDirIfNotExist(defaultAssetsFilesPrivate); err != nil {
+	if err := c.generateBasicDirectories(); err != nil {
 		return errors.Trace(err)
 	}
 
 	return nil
+}
+
+func (c *ConfigChecker) generateBasicDirectories() error {
+	if err := c.generateDirIfNotExist(defaultAssetsFilesPublic); err != nil {
+		return errors.Trace(err)
+	}
+	return errors.Trace(c.generateDirIfNotExist(defaultAssetsFilesPrivate))
 }
 
 func (c *ConfigChecker) generateDirIfNotExist(path string) error {
