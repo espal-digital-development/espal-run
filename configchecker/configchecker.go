@@ -15,8 +15,10 @@ import (
 )
 
 const (
-	adminURLLength = 4
-	pprofURLLength = 4
+	adminURLLength            = 4
+	pprofURLLength            = 4
+	defaultAssetsFilesPublic  = "./app/assets/files/public"
+	defaultAssetsFilesPrivate = "./app/assets/files/private"
 )
 
 type configOption struct {
@@ -115,6 +117,28 @@ func (c *ConfigChecker) Do() error {
 
 	if err := ioutil.WriteFile(c.path, output, 0600); err != nil {
 		return errors.Trace(err)
+	}
+
+	// Generate the default assets files public/private if they don't exist
+	if err := c.generateDirIfNotExist(defaultAssetsFilesPublic); err != nil {
+		return errors.Trace(err)
+	}
+	if err := c.generateDirIfNotExist(defaultAssetsFilesPrivate); err != nil {
+		return errors.Trace(err)
+	}
+
+	return nil
+}
+
+func (c *ConfigChecker) generateDirIfNotExist(path string) error {
+	_, err := os.Stat(path)
+	if err != nil && !os.IsNotExist(err) {
+		return errors.Trace(err)
+	}
+	if os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0700); err != nil {
+			return errors.Trace(err)
+		}
 	}
 	return nil
 }

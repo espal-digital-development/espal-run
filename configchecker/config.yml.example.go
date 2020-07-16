@@ -15,8 +15,8 @@ urls:
   pprof: #PPROF_ADMIN
 paths:
   assets:
-    publicFiles: ./app/assets/files/public
-    privateFiles: ./app/assets/files/private
+    publicFiles: ` + defaultAssetsFilesPublic + `
+    privateFiles: ` + defaultAssetsFilesPrivate + `
 `)
 
 // nolint:gochecknoglobals
@@ -94,7 +94,7 @@ paths:
     javascript: ./app/assets/js
     images: ./app/assets/images
     publicRootFiles: ./app/assets/files/root
-    publicFiles: ./app/assets/files/public
-    privateFiles: ./app/assets/files/private
+    publicFiles: ` + defaultAssetsFilesPublic + `
+    privateFiles: ` + defaultAssetsFilesPrivate + `
   translations: ./app/translations
 `)
