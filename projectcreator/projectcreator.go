@@ -50,9 +50,7 @@ func (c *ProjectCreator) Do(path string) error {
 		return errors.Trace(err)
 	}
 
-	desiredModuleName := filepath.Base(path)
-
-	out, err := exec.Command("go", "mod", "init", desiredModuleName).CombinedOutput()
+	out, err := exec.Command("go", "mod", "init", filepath.Base(path)).CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
 		return errors.Trace(err)
