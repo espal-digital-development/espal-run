@@ -7,11 +7,13 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"syscall"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
 	"github.com/espal-digital-development/espal-run/gopackage"
 	"github.com/espal-digital-development/espal-run/openssl"
+	"github.com/espal-digital-development/espal-run/projectcreator"
 	"github.com/espal-digital-development/espal-run/qtcbuilder"
 	"github.com/espal-digital-development/espal-run/randomstring"
 	"github.com/espal-digital-development/espal-run/runner"
@@ -46,18 +48,20 @@ const (
 
 // nolint:gochecknoglobals
 var (
-	cwd            string
-	fullConfigFile bool
-	runChecks      bool
-	allSkips       bool
-	skipQTC        bool
-	skipDB         bool
-	resetDB        bool
-	dbPortStart    int
-	dbNodes        int
+	cwd               string
+	createProjectPath string
+	fullConfigFile    bool
+	runChecks         bool
+	allSkips          bool
+	skipQTC           bool
+	skipDB            bool
+	resetDB           bool
+	dbPortStart       int
+	dbNodes           int
 )
 
 func parseFlags() {
+	flag.StringVar(&createProjectPath, "create-project", "", "Create a new espal app project")
 	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with default values, unless overriden by the prompter")
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
 	flag.BoolVar(&allSkips, "all-skips", false, "Enable all available skips: skip-qtc, skip-db")
@@ -79,6 +83,16 @@ func main() {
 	parseFlags()
 	if err := setCwd(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
+	}
+
+	if createProjectPath != "" {
+		projectCreator, err := projectcreator.New()
+		if err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
+		if err := projectCreator.Do(createProjectPath); err != nil {
+			log.Fatal(errors.ErrorStack(err))
+		}
 	}
 
 	randomString, err := randomstring.New()
@@ -206,4 +220,15 @@ func runAllChecks() {
 	if !bytes.Contains(out, []byte("There are no problems")) {
 		log.Println(string(out))
 	}
+}
+
+func setSoftUlimit() error {
+	var rLimit syscall.Rlimit
+	rLimit.Max = 20000
+	rLimit.Cur = 20000
+	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return nil
 }
