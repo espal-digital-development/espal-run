@@ -7,24 +7,27 @@ func (c *ConfigChecker) defaultToRequest() []*configOption {
 			Name: "Database host",
 			Info: c.textPainter.lightBlueString("0.0.0.0") + ", " +
 				c.textPainter.lightBlueString("127.0.0.1") + ", " + c.textPainter.darkBlueString("localhost"),
-			DefaultOption: "localhost",
+			DefaultOption:      "localhost",
+			RequestOnlyForFull: true,
 		},
 		{
-			Tag:           "#DATABASE_PORT",
-			Name:          "Database port",
-			Info:          c.textPainter.darkBlueString("36257"),
-			DefaultOption: "36257",
+			Tag:                "#DATABASE_PORT",
+			Name:               "Database port",
+			Info:               c.textPainter.darkBlueString("36257"),
+			DefaultOption:      "36257",
+			RequestOnlyForFull: true,
 		},
 		{
-			Tag:           "#DATABASE_NAME",
-			Name:          "Database name",
-			Info:          c.textPainter.darkBlueString("app"),
-			DefaultOption: "app",
+			Tag:                "#DATABASE_NAME",
+			Name:               "Database name",
+			Info:               c.textPainter.darkBlueString("app"),
+			DefaultOption:      "app",
+			RequestOnlyForFull: true,
 		},
 		{
 			Tag:  "#EMAIL_HOST",
 			Name: "Email host",
-			Info: "smtp.domain.dev",
+			Info: c.textPainter.darkBlueString("smtp.domain.dev"),
 		},
 		{
 			Tag:           "#EMAIL_PORT",
@@ -40,9 +43,10 @@ func (c *ConfigChecker) defaultToRequest() []*configOption {
 			Name: "Email password",
 		},
 		{
-			Tag:  "#EMAIL_NO_REPLY_ADDRESS",
-			Name: "Email no-reply address",
-			Info: "noreply@domain.dev",
+			Tag:           "#EMAIL_NO_REPLY_ADDRESS",
+			Name:          "Email no-reply address",
+			Info:          c.textPainter.darkBlueString("noreply@domain.dev"),
+			DefaultOption: "noreply@domain.dev",
 		},
 	}
 }

@@ -1,5 +1,24 @@
 package configchecker
 
+var simpleConfigYmlExample = []byte(`general:
+  development: true
+  logging: true
+  pprof: true
+email:
+  host: #EMAIL_HOST
+  port: #EMAIL_PORT
+  username: #EMAIL_USERNAME
+  password: #EMAIL_PASSWORD
+  noReplyAddress: #EMAIL_NO_REPLY_ADDRESS
+urls:
+  admin: #URLS_ADMIN
+  pprof: #PPROF_ADMIN
+paths:
+  assets:
+    publicFiles: ./app/assets/files/public
+    privateFiles: ./app/assets/files/private
+`)
+
 // nolint:gochecknoglobals
 var configYmlExample = []byte(`general:
   development: true

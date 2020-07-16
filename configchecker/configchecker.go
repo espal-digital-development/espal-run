@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 
@@ -24,12 +25,15 @@ type configOption struct {
 	DefaultOption string
 	Name          string
 	Value         string
+	// Only request this option on the full config generation
+	RequestOnlyForFull bool
 }
 
 type ConfigChecker struct {
-	randomString *randomstring.RandomString
-	path         string
-	textPainter  *textPainter
+	path               string
+	generateFullConfig bool
+	randomString       *randomstring.RandomString
+	textPainter        *textPainter
 }
 
 // GetPath gets path.
@@ -53,9 +57,13 @@ func (c *ConfigChecker) Do() error {
 		return nil
 	}
 
+	log.Println("No configuration file found. Please answer the following to generate one:")
 	configToRequest := c.defaultToRequest()
 	reader := bufio.NewReader(os.Stdin)
 	for _, configRequest := range configToRequest {
+		if !c.generateFullConfig && configRequest.RequestOnlyForFull {
+			continue
+		}
 		for {
 			fmt.Printf(configRequest.Name)
 			if configRequest.Info != "" {
@@ -82,9 +90,7 @@ func (c *ConfigChecker) Do() error {
 		}
 	}
 
-	output := configYmlExample
-
-	// Add some defaults without
+	// Add some defaults without prompting
 	configToRequest = append(configToRequest, []*configOption{
 		{
 			Tag:   "#URLS_ADMIN",
@@ -95,6 +101,13 @@ func (c *ConfigChecker) Do() error {
 			Value: "_" + c.randomString.Simple(pprofURLLength),
 		},
 	}...)
+
+	var output []byte
+	if c.generateFullConfig {
+		output = configYmlExample
+	} else {
+		output = simpleConfigYmlExample
+	}
 
 	for _, configRequest := range configToRequest {
 		output = bytes.Replace(output, []byte(configRequest.Tag), []byte(configRequest.Value), 1)
@@ -107,7 +120,7 @@ func (c *ConfigChecker) Do() error {
 }
 
 // New returns a new instance of ConfigChecker.
-func New(randomString *randomstring.RandomString) (*ConfigChecker, error) {
+func New(randomString *randomstring.RandomString, generateFullConfig bool) (*ConfigChecker, error) {
 	c := &ConfigChecker{
 		randomString: randomString,
 		textPainter: &textPainter{
@@ -115,6 +128,7 @@ func New(randomString *randomstring.RandomString) (*ConfigChecker, error) {
 			lightBlue: "\033[0;34m",
 			darkBlue:  "\033[0;94m",
 		},
+		generateFullConfig: generateFullConfig,
 	}
 	c.textPainter.resolveDefaults()
 	return c, nil

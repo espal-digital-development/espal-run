@@ -46,17 +46,19 @@ const (
 
 // nolint:gochecknoglobals
 var (
-	cwd         string
-	runChecks   bool
-	allSkips    bool
-	skipQTC     bool
-	skipDB      bool
-	resetDB     bool
-	dbPortStart int
-	dbNodes     int
+	cwd            string
+	fullConfigFile bool
+	runChecks      bool
+	allSkips       bool
+	skipQTC        bool
+	skipDB         bool
+	resetDB        bool
+	dbPortStart    int
+	dbNodes        int
 )
 
 func parseFlags() {
+	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with default values, unless overriden by the prompter")
 	flag.BoolVar(&runChecks, "run-checks", false, "Run the checks with inspectors")
 	flag.BoolVar(&allSkips, "all-skips", false, "Enable all available skips: skip-qtc, skip-db")
 	flag.BoolVar(&skipQTC, "skip-qtc", false, "Don't run the QuickTemplate Compiler")
@@ -118,7 +120,7 @@ func main() {
 		runAllChecks()
 	}
 
-	configChecker, err := configchecker.New(randomString)
+	configChecker, err := configchecker.New(randomString, fullConfigFile)
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
