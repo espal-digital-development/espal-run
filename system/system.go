@@ -47,9 +47,10 @@ func (s *System) InstallBinaryDependencies() error {
 		log.Println("\t", collectErrors[k].Error())
 	}
 
-	// TODO :: Some feedback to disable the settings as an alternative
+	// TODO :: When all real installation attempts are ready, make this an error again
 
-	return errors.New(errMessage)
+	// return errors.New(errMessage)
+	return nil
 }
 
 // New returns a new instance of System.
