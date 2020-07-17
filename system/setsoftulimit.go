@@ -1,6 +1,6 @@
 // +build !windows
 
-package main
+package system
 
 import (
 	"syscall"
@@ -8,10 +8,10 @@ import (
 	"github.com/juju/errors"
 )
 
-func setSoftUlimit() error {
+func (s *System) setSoftUlimit(max uint64, cur uint64) error {
 	var rLimit syscall.Rlimit
-	rLimit.Max = 20000
-	rLimit.Cur = 20000
+	rLimit.Max = max
+	rLimit.Cur = cur
 	err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &rLimit)
 	if err != nil {
 		return errors.Trace(err)

@@ -20,6 +20,7 @@ import (
 	"github.com/espal-digital-development/espal-run/runner"
 	"github.com/espal-digital-development/espal-run/sslgenerator"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
+	"github.com/espal-digital-development/espal-run/system"
 	"github.com/juju/errors"
 )
 
@@ -44,6 +45,8 @@ const (
 	defaultConfigPath       = "./app/config.yml"
 	defaultDatabaseRootUser = "root"
 	defaultDatabaseHTTPUser = "espal"
+	defaultSoftLimitMax     = 20000
+	defaultSoftLimitCur     = 20000
 )
 
 // nolint:gochecknoglobals
@@ -125,7 +128,11 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := setSoftUlimit(); err != nil {
+	system, err := system.New()
+	if err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	if err := system.SetSoftUlimit(defaultSoftLimitMax, defaultSoftLimitCur); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 	if err := checkSSL(); err != nil {

@@ -18,14 +18,15 @@ func (c *ProjectCreator) Do(path string) error {
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
 	}
-	if os.IsNotExist(err) {
+	switch {
+	case os.IsNotExist(err):
 		if err := os.MkdirAll(path, 0700); err != nil {
 			return errors.Trace(err)
 		}
-	} else if stat.IsDir() {
-		return errors.Errorf("%s already exists")
-	} else {
-		return errors.Errorf("%s already exists, and is not a directory")
+	case stat.IsDir():
+		return errors.Errorf("%s already exists", path)
+	default:
+		return errors.Errorf("%s already exists, and is not a directory", path)
 	}
 
 	if err := ioutil.WriteFile(filepath.FromSlash(path+"/.gitignore"), gitIgnoreFile, 0600); err != nil {

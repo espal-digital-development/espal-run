@@ -10,6 +10,7 @@ import (
 	"github.com/mattn/go-zglob"
 )
 
+// StoreIntegrity checks the data store's pacakges integrity.
 type StoreIntegrity struct {
 	path string
 }
