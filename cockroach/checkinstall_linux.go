@@ -19,7 +19,7 @@ func (c *Cockroach) checkInstall() error {
 	}
 	log.Println(cockroachNotFoundInstalling)
 	tmpDir := os.TempDir()
-	tarFileName := tmpDir + "cockroach.tgz"
+	tarFileName := tmpDir + "/cockroach.tgz"
 	if err := c.downloadFile(tarFileName,
 		"https://binaries.cockroachdb.com/cockroach-v20.1.3.linux-amd64.tgz"); err != nil {
 		return errors.Trace(err)
