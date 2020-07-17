@@ -24,14 +24,6 @@ import (
 	"github.com/juju/errors"
 )
 
-// TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
-//   different; it may cause discrepancies for this command.
-// TODO :: Security inspections of the area where the espal app is ran.
-//   Check mod values and if the environment has dangerous settings set.
-// TODO :: Add support for blending xargs parameters and ENV variables.
-// TODO :: Check macOS Homebrew installed.
-// TODO :: 777777 Mutli-OS install pngquant/jpegoptim/gifsicle/svgo.
-
 const (
 	randomPasswordLength    = 32
 	defaultServerPath       = "./app/server"
@@ -57,6 +49,12 @@ var (
 	dbPortStart       int
 	dbNodes           int
 )
+
+// TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
+//   different; it may cause discrepancies for this command.
+// TODO :: Security inspections of the area where the espal app is ran.
+//   Check mod values and if the environment has dangerous settings set.
+// TODO :: Add support for blending xargs parameters and ENV variables.
 
 func parseFlags() {
 	flag.StringVar(&createProjectPath, "create-project", "", "Create a new espal app project")
@@ -119,15 +117,19 @@ func main() {
 		log.Fatalf("there doesn't seem to be an app at %s", cwd)
 	}
 
-	randomString, err := randomstring.New()
-	if err != nil {
-		log.Fatal(errors.ErrorStack(err))
-	}
 	system, err := system.New()
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 	if err := system.SetSoftUlimit(defaultSoftLimitMax, defaultSoftLimitCur); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	if err := system.InstallBinaryDependencies(); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+
+	randomString, err := randomstring.New()
+	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 	if err := checkSSL(); err != nil {
