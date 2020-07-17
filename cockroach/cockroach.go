@@ -8,7 +8,7 @@ import (
 	"github.com/juju/errors"
 )
 
-const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to installing.."
+const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to install.."
 
 type Cockroach struct {
 	desiredNodes  int
