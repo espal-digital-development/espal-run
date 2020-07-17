@@ -6,8 +6,7 @@ import (
 	"os/exec"
 )
 
-// Package represents an object that provides Go package
-// instances and their actions.
+// Package represents an object that provides Go package instances and their actions.
 type Package interface {
 	Name() string
 	IsInstalled() bool
