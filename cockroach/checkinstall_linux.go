@@ -36,4 +36,5 @@ func (c *Cockroach) checkInstall() error {
 		log.Println(string(out))
 		return errors.Trace(err)
 	}
+	return nil
 }
