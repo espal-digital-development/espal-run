@@ -65,7 +65,7 @@ func (g *SSLGenerator) Do() error {
 		return nil
 	}
 
-	log.Println("No server certificate found. Creating one now. This might take a while..")
+	log.Println("No server certificate found. Creating one now..")
 
 	// TODO :: Use makecert here instead? Or try both with makecert as a first option?
 

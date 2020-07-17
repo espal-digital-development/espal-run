@@ -24,13 +24,12 @@ func (c *Cockroach) checkInstall() error {
 		"https://binaries.cockroachdb.com/cockroach-v20.1.3.linux-amd64.tgz"); err != nil {
 		return errors.Trace(err)
 	}
-	// cockroach-v20.1.3.linux-amd64/cockroach > cockroach
 	out, err := exec.Command("tar", "zxvf", tarFileName).CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
 		return errors.Trace(err)
 	}
-	out, err = exec.Command("cp", "-i", "cockroach-v20.1.3.linux-amd64/cockroach", "/usr/local/bin/").
+	out, err = exec.Command("cp", "cockroach-v20.1.3.linux-amd64/cockroach", os.Getenv("GOPATH")+"/bin/").
 		CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
