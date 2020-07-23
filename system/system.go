@@ -18,6 +18,7 @@ func (s *System) SetSoftUlimit(max uint64, cur uint64) error {
 // InstallBinaryDependencies checks if binaries that the system is dependent on are installed and will do so if needed.
 func (s *System) InstallBinaryDependencies() error {
 	if err := s.checkOSSpecificTools(); err != nil {
+		// TODO :: Prompt here if the use wants to continue without any dependency and return with nil
 		return errors.Trace(err)
 	}
 	collectErrors := []error{
@@ -34,22 +35,19 @@ func (s *System) InstallBinaryDependencies() error {
 			break
 		}
 	}
-	if !hasErrors {
-		return nil
-	}
-
-	errMessage := "Core dependency(/ies) are missing and couldn't be automatically installed"
-	log.Println(errMessage + ":")
-	for k := range collectErrors {
-		if collectErrors[k] == nil {
-			continue
+	if hasErrors {
+		errMessage := "Core dependency(/ies) are missing and couldn't be automatically installed"
+		log.Println(errMessage + ":")
+		for k := range collectErrors {
+			if collectErrors[k] == nil {
+				continue
+			}
+			log.Println("\t", collectErrors[k].Error())
 		}
-		log.Println("\t", collectErrors[k].Error())
+
+		// TODO :: Prompt here if the use wants to continue or abort to retry again after the installation
 	}
 
-	// TODO :: When all real installation attempts are ready, make this an error again
-
-	// return errors.New(errMessage)
 	return nil
 }
 

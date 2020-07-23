@@ -2,7 +2,14 @@
 
 package system
 
-// Federated List of Linux' and their fallback and primary package manager
+import (
+	"bytes"
+	"os/exec"
+
+	"github.com/juju/errors"
+)
+
+// Federated List of Linux' and their fallback- and primary package manager
 // Debian			dpkg    apt
 // Ubuntu			dpkg    apt (snap, flatpack)
 // Mint				dpkg    apt (flatpack)
@@ -29,15 +36,13 @@ package system
 // Solus			eopkg   - (based on PiSi)
 // Puppy			ppm		- (command? puppy package manager)
 
-type pkg struct {
-	name         string // Global shared name
-	managersName string // Name for the specific package manager
-}
+const packageNotInstalledErrBlueprint = "%s is not installed. Install it with your package manager via `%s`"
+
+var errNoCompatiblePackageManagerFound = errors.New("no compatible package manager found for this linux distro")
 
 type packageManager struct {
-	name              string
-	installArgs       string
-	availablePackages []*pkg
+	name        string
+	installArgs string
 }
 
 func (m *packageManager) installPackageCmd(name string) string {
@@ -49,16 +54,20 @@ func (m *packageManager) installPackageCmd(name string) string {
 }
 
 func (s *System) checkOSSpecificTools() error {
+	_, err := s.determinePackageManager()
+	if err != nil {
+		return errors.Trace(err)
+	}
 	return nil
 }
 
-func (s *System) determinePackageManager() (string, error) {
-	name := ""
+func (s *System) determinePackageManager() (*packageManager, error) {
+	var pkgManager *packageManager
 
 	// Search order
 	search := []*packageManager{
 		&packageManager{
-			Name: "apt",
+			name: "sudo apt",
 		},
 		// TODO :: Figure out how to download and install via tmpDir
 		// &packageManager{ // This one needs downloaded .deb files
@@ -66,20 +75,20 @@ func (s *System) determinePackageManager() (string, error) {
 		// 	InstallArgs: "--install",
 		// },
 		&packageManager{
-			Name: "yum",
+			name: "yum",
 		},
 		&packageManager{
-			Name: "dnf",
+			name: "dnf",
 		},
 		&packageManager{
-			Name: "zypper",
+			name: "zypper",
 		},
 		&packageManager{
-			Name: "rpm",
+			name: "rpm",
 		},
 		&packageManager{
-			Name:        "pacman",
-			InstallArgs: "-S",
+			name:        "pacman",
+			installArgs: "-S",
 		},
 		// TODO :: Figure out how to implement
 		// &packageManager{
@@ -87,29 +96,57 @@ func (s *System) determinePackageManager() (string, error) {
 		// 	InstallArgs: "???",
 		// },
 		&packageManager{
-			Name:        "emerge",
-			InstallArgs: "", // uses no extra parameters, just emerge <package name>
+			name:        "emerge",
+			installArgs: "", // uses no extra parameters, just emerge <package name>
 		},
 		&packageManager{
-			Name: "eopkg",
+			name: "eopkg",
 		},
 	}
 
-	return name, nil
+	for k := range search {
+		out, _ := exec.Command("which", search[k].name).CombinedOutput()
+		if bytes.Contains(out, []byte("/"+search[k].name)) {
+			pkgManager = search[k]
+			break
+		}
+	}
+
+	if pkgManager == nil {
+		return nil, errors.Trace(errNoCompatiblePackageManagerFound)
+	}
+
+	return pkgManager, nil
 }
 
 func (s *System) installPngQuantIfNeeded() error {
-	return nil
+	packageManager, err := s.determinePackageManager()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return errors.Errorf(packageNotInstalledErrBlueprint, "pngquant", packageManager.installPackageCmd("pngquant"))
 }
 
 func (s *System) installJpegoptimIfNeeded() error {
-	return nil
+	packageManager, err := s.determinePackageManager()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return errors.Errorf(packageNotInstalledErrBlueprint, "jpegoptim", packageManager.installPackageCmd("jpegoptim"))
 }
 
 func (s *System) installGifsicleIfNeeded() error {
-	return nil
+	packageManager, err := s.determinePackageManager()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return errors.Errorf(packageNotInstalledErrBlueprint, "gifsicle", packageManager.installPackageCmd("gifsicle"))
 }
 
 func (s *System) installSvgoIfNeeded() error {
-	return nil
+	packageManager, err := s.determinePackageManager()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	return errors.Errorf(packageNotInstalledErrBlueprint, "svgo", packageManager.installPackageCmd("svgo"))
 }
