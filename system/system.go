@@ -1,7 +1,12 @@
 package system
 
 import (
+	"bufio"
+	"fmt"
+	"io"
 	"log"
+	"os"
+	"strings"
 
 	"github.com/juju/errors"
 )
@@ -18,8 +23,16 @@ func (s *System) SetSoftUlimit(max uint64, cur uint64) error {
 // InstallBinaryDependencies checks if binaries that the system is dependent on are installed and will do so if needed.
 func (s *System) InstallBinaryDependencies() error {
 	if err := s.checkOSSpecificTools(); err != nil {
-		// TODO :: Prompt here if the use wants to continue without any dependency and return with nil
-		return errors.Trace(err)
+		log.Println(err.Error())
+		log.Println("You can choose to continue without the base tools.")
+		shouldContinue, err := s.continueOrAbort()
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if shouldContinue {
+			return nil
+		}
+		os.Exit(2) // nolint:gomnd
 	}
 	collectErrors := []error{
 		errors.Trace(s.installPngQuantIfNeeded()),
@@ -45,10 +58,38 @@ func (s *System) InstallBinaryDependencies() error {
 			log.Println("\t", collectErrors[k].Error())
 		}
 
-		// TODO :: Prompt here if the use wants to continue or abort to retry again after the installation
+		log.Println("You can choose to continue without the dependencies.")
+		shouldContinue, err := s.continueOrAbort()
+		if err != nil {
+			return errors.Trace(err)
+		}
+		if !shouldContinue {
+			os.Exit(2) // nolint:gomnd
+		}
 	}
 
 	return nil
+}
+
+func (s *System) continueOrAbort() (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Printf("Do you want to continue or abort? [c/A] ")
+		value, err := reader.ReadString('\n')
+		if err != nil && err == io.EOF {
+			break
+		}
+		if err != nil {
+			return false, errors.Trace(err)
+		}
+		value = strings.Trim(value, "\n")
+		if value == "" || value == "A" {
+			return false, nil
+		} else if value == "c" {
+			break
+		}
+	}
+	return true, nil
 }
 
 // New returns a new instance of System.
