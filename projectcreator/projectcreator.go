@@ -29,16 +29,16 @@ func (c *ProjectCreator) Do(path string) error {
 		return errors.Errorf("%s already exists, and is not a directory", path)
 	}
 
-	if err := ioutil.WriteFile(filepath.FromSlash(path+"/.gitignore"), gitIgnoreFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/.gitignore", gitIgnoreFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(filepath.FromSlash(path+"/espal-run.yml"), espalRunFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/espal-run.yml", espalRunFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(filepath.FromSlash(path+"/main.go"), mainGoFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/main.go", mainGoFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(filepath.FromSlash(path+"/main_test.go"), mainGoTestFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/main_test.go", mainGoTestFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
 

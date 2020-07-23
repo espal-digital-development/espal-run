@@ -11,6 +11,8 @@ import (
 	"github.com/juju/errors"
 )
 
+const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to install.."
+
 func (c *Cockroach) checkInstall() error {
 	out, _ := exec.Command("which", "cockroach").CombinedOutput()
 	isInstalled := bytes.Contains(out, []byte("/cockroach"))

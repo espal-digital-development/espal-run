@@ -8,8 +8,6 @@ import (
 	"github.com/juju/errors"
 )
 
-const cockroachNotFoundInstalling = "Did not find `cockroach`. Attempting to install.."
-
 type Cockroach struct {
 	desiredNodes  int
 	host          string
@@ -118,13 +116,12 @@ func (c *Cockroach) GetDatabasePath() string {
 // SetDatabasePath sets databasePath.
 func (c *Cockroach) SetDatabasePath(databasePath string) error {
 	var err error
-	c.databasePath, err = filepath.Abs(filepath.FromSlash(
-		strings.TrimRight(strings.TrimSpace(databasePath), "/")))
+	c.databasePath, err = filepath.Abs(strings.TrimRight(strings.TrimSpace(databasePath), "/"))
 	if err != nil {
 		return errors.Trace(err)
 	}
-	c.certsDir = filepath.FromSlash(c.databasePath + "/certs")
-	c.safeDir = filepath.FromSlash(c.databasePath + "/safe")
+	c.certsDir = c.databasePath + "/certs"
+	c.safeDir = c.databasePath + "/safe"
 	return nil
 }
 

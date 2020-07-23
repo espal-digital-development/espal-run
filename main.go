@@ -83,7 +83,7 @@ func main() {
 	// nolint:nestif
 	if createProjectPath != "" {
 		var err error
-		createProjectPath, err = filepath.Abs(filepath.FromSlash(createProjectPath))
+		createProjectPath, err = filepath.Abs(createProjectPath)
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
@@ -183,7 +183,7 @@ func main() {
 }
 
 func pathIsAnApp(path string) (bool, error) {
-	modFilePath := filepath.FromSlash(path + "/go.mod")
+	modFilePath := path + "/go.mod"
 	_, err := os.Stat(modFilePath)
 	if err != nil && !os.IsNotExist(err) {
 		return false, errors.Trace(err)

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/juju/errors"
 )
@@ -33,7 +32,7 @@ func (c *Cockroach) startNodeNonBlocking(storeName string, portNumber int, httpP
 	log.Println("Starting `" + storeName + "`..")
 
 	cmd := exec.Command("cockroach", "start", "--certs-dir="+c.certsDir,
-		"--store="+filepath.FromSlash(c.databasePath+"/"+storeName),
+		"--store="+c.databasePath+"/"+storeName,
 		fmt.Sprintf("--listen-addr=%s:%d", c.host, portNumber),
 		fmt.Sprintf("--http-addr=%s:%d", c.httpHost, httpPortNumber),
 		"--join="+c.getHostsJoin(), "--background")

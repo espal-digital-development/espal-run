@@ -22,10 +22,10 @@ func (c *Cockroach) checkInstall() error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-	dbBinPath := dbDirPath + filepath.FromSlash("/bin")
-	dbPath := dbBinPath + filepath.FromSlash("/cockroach.exe")
-	zipPath := dbDirPath + filepath.FromSlash("/cockroach.zip")
-	unzippedPath := dbDirPath + filepath.FromSlash("/"+packageName)
+	dbBinPath := dbDirPath + "/bin"
+	dbPath := dbBinPath + "/cockroach.exe"
+	zipPath := dbDirPath + "/cockroach.zip"
+	unzippedPath := dbDirPath + "/" + packageName
 
 	_, err = os.Stat(dbDirPath)
 	if err != nil && !os.IsNotExist(err) {
@@ -51,7 +51,7 @@ func (c *Cockroach) checkInstall() error {
 	}
 
 	zoneInfoURL := "https://github.com/golang/go/raw/master/lib/time/zoneinfo.zip"
-	zoneInfoPath := dbDirPath + filepath.FromSlash("/go-zoneinfo.zip")
+	zoneInfoPath := dbDirPath + "/go-zoneinfo.zip"
 	_, err = os.Stat(zoneInfoPath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Trace(err)
@@ -112,7 +112,7 @@ func (c *Cockroach) download(dbBinPath string, dbDirPath string, zipPath string,
 
 func (c *Cockroach) install(dbPath string, zipPath string, unzippedPath string) error {
 	log.Println("Installing..")
-	unzippedBinaryPath := unzippedPath + filepath.FromSlash("/cockroach.exe")
+	unzippedBinaryPath := unzippedPath + "/cockroach.exe"
 	if err := os.Rename(unzippedBinaryPath, dbPath); err != nil {
 		return errors.Trace(err)
 	}

@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/juju/errors"
@@ -28,7 +27,7 @@ func (g *SSLGenerator) GetServerPath() string {
 
 // SetServerPath sets serverPath.
 func (g *SSLGenerator) SetServerPath(serverPath string) {
-	g.serverPath = filepath.FromSlash(serverPath)
+	g.serverPath = serverPath
 }
 
 func (g *SSLGenerator) Do() error {
