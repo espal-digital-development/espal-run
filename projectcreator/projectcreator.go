@@ -32,7 +32,7 @@ func (c *ProjectCreator) Do(path string) error {
 	if err := ioutil.WriteFile(path+"/.gitignore", gitIgnoreFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(path+"/espal-run.yml", espalRunFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/espal-run.yml", runFile, 0600); err != nil {
 		return errors.Trace(err)
 	}
 	if err := ioutil.WriteFile(path+"/main.go", mainGoFile, 0600); err != nil {

@@ -31,7 +31,7 @@ const (
 	defaultStoresPath       = "./stores"
 	defaultConfigPath       = "./app/config.yml"
 	defaultDatabaseRootUser = "root"
-	defaultDatabaseHTTPUser = "espal"
+	defaultDatabaseHTTPUser = "app"
 	defaultSoftLimitMax     = 20000
 	defaultSoftLimitCur     = 20000
 )
@@ -52,12 +52,12 @@ var (
 
 // TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
 //   different; it may cause discrepancies for this command.
-// TODO :: Security inspections of the area where the espal app is ran.
+// TODO :: Security inspections of the area where the app is ran.
 //   Check mod values and if the environment has dangerous settings set.
 // TODO :: Add support for blending xargs parameters and ENV variables.
 
 func parseFlags() {
-	flag.StringVar(&createProjectPath, "create-project", "", "Create a new espal app project")
+	flag.StringVar(&createProjectPath, "create-project", "", "Create a new app project")
 	flag.StringVar(&appPath, "app-path", "", "Target app path")
 	flag.BoolVar(&runChecks, "full-config-file", false, "Generate the most complete config file possible with "+
 		"default values, unless overridden by the prompter")
