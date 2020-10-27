@@ -7,6 +7,7 @@ import (
 type OpenSSL struct {
 }
 
+// Check and install the required binaries.
 func (o *OpenSSL) CheckAndInstall() error {
 	if err := o.checkAndInstall(); err != nil {
 		return errors.Trace(err)

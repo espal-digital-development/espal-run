@@ -90,7 +90,7 @@ func (r *Runner) isWatchedFile(path string) (bool, error) {
 }
 
 func (r *Runner) shouldRebuild(eventName string) bool {
-	fileName := strings.Replace(strings.Split(eventName, ":")[0], `"`, "", -1)
+	fileName := strings.ReplaceAll(strings.Split(eventName, ":")[0], `"`, "")
 	for k := range r.config.InvalidExtensions {
 		if strings.HasSuffix(fileName, r.config.InvalidExtensions[k]) {
 			return false

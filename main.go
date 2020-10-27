@@ -13,12 +13,12 @@ import (
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
 	"github.com/espal-digital-development/espal-run/gopackage"
+	"github.com/espal-digital-development/espal-run/mkcert"
 	"github.com/espal-digital-development/espal-run/openssl"
 	"github.com/espal-digital-development/espal-run/projectcreator"
 	"github.com/espal-digital-development/espal-run/qtcbuilder"
 	"github.com/espal-digital-development/espal-run/randomstring"
 	"github.com/espal-digital-development/espal-run/runner"
-	"github.com/espal-digital-development/espal-run/sslgenerator"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
 	"github.com/espal-digital-development/espal-run/system"
 	"github.com/juju/errors"
@@ -132,7 +132,10 @@ func main() {
 	if err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
-	if err := checkSSL(); err != nil {
+	if err := checkOpenSSL(); err != nil {
+		log.Fatal(errors.ErrorStack(err))
+	}
+	if err := checkMkcert(); err != nil {
 		log.Fatal(errors.ErrorStack(err))
 	}
 
@@ -201,24 +204,21 @@ func pathIsAnApp(path string) (bool, error) {
 	return false, nil
 }
 
-func checkSSL() error {
+func checkOpenSSL() error {
 	openSSL, err := openssl.New()
 	if err != nil {
 		return errors.Trace(err)
 	}
-	if err := openSSL.CheckAndInstall(); err != nil {
-		return errors.Trace(err)
-	}
+	return errors.Trace(openSSL.CheckAndInstall())
+}
 
-	sslGenerator, err := sslgenerator.New()
+func checkMkcert() error {
+	mkcert, err := mkcert.New()
 	if err != nil {
 		return errors.Trace(err)
 	}
-	sslGenerator.SetServerPath(defaultServerPath)
-	if err := sslGenerator.Do(); err != nil {
-		return errors.Trace(err)
-	}
-	return nil
+	mkcert.SetServerPath(defaultServerPath)
+	return errors.Trace(mkcert.CheckAndInstall())
 }
 
 func cockroachSetup(randomString *randomstring.RandomString) error {
