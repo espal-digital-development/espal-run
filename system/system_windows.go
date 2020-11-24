@@ -51,6 +51,16 @@ func (s *System) installSvgoIfNeeded() error {
 		return nil
 	}
 
+	out, _ = exec.Command("which", "npm").CombinedOutput()
+	isInstalled = bytes.Contains(out, []byte("/npm"))
+
+	if !isInstalled {
+		return errors.Errorf(notInstalledErrBlueprint, "npm", "https://nodejs.org/en/")
+		// TODO :: Attempt to install (https://nodejs.org/en/) or use Chocolatey?
+		// log.Println("npm is not installed. Attempting to install now..")
+		// out, err := exec.Command("npm", "install", "-g", "svgo").CombinedOutput()
+	}
+
 	log.Println("svgo is not installed. Attempting to install now..")
 	out, err := exec.Command("npm", "install", "-g", "svgo").CombinedOutput()
 
