@@ -47,7 +47,7 @@ func (r *Runner) validateChecksum(path string) (bool, error) {
 	if runtime.GOOS == windowsOS {
 		fileSum = strings.Split(string(sumBytes), "\n")[1]
 	} else {
-		fileSum = strings.Trim(strings.Split(string(sumBytes), " = ")[1], "\n")
+		fileSum = strings.TrimSpace(strings.Split(string(sumBytes), " = ")[1])
 	}
 
 	if ok && sum == fileSum {

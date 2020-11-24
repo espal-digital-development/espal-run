@@ -82,7 +82,7 @@ func (s *System) continueOrAbort() (bool, error) {
 		if err != nil {
 			return false, errors.Trace(err)
 		}
-		value = strings.Trim(value, "\n")
+		value = strings.TrimSpace(value)
 		if value == "" || value == "A" {
 			return false, nil
 		} else if value == "c" {

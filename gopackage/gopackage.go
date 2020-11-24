@@ -27,7 +27,7 @@ func (p *GoPackage) Name() string {
 // IsInstalled checks if the current package is installed on the system.
 func (p *GoPackage) IsInstalled() bool {
 	out, _ := exec.Command("go", "list", p.name).CombinedOutput()
-	return string(bytes.Trim(out, "\n")) == p.name
+	return string(bytes.TrimSpace(out)) == p.name
 }
 
 // Install attempts to install the current package.

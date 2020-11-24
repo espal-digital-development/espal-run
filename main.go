@@ -259,7 +259,7 @@ func runAllChecks() {
 
 	removeCoreChecks := regexp.MustCompile(`(?m)^.*?local[\/\\]opt.*?\n`)
 	out, _ = exec.Command("errcheck", "./...").CombinedOutput()
-	out = bytes.Trim(removeCoreChecks.ReplaceAll(out, []byte("")), "\n")
+	out = bytes.TrimSpace(removeCoreChecks.ReplaceAll(out, []byte("")))
 	// Silly check if there's more than the normal complain-line
 	if bytes.Contains(out, []byte("\n")) {
 		log.Println(string(out))

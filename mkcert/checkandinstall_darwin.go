@@ -32,7 +32,7 @@ func (m *Mkcert) checkAndInstall() error {
 	}
 	log.Println("Initializing mkcert..")
 	out, err := exec.Command("mkcert", "-install").CombinedOutput()
-	if len(bytes.Trim(out, "\n\t ")) > 0 {
+	if len(bytes.TrimSpace(out)) > 0 {
 		fmt.Println(string(out))
 	}
 	if err != nil {
@@ -42,7 +42,7 @@ func (m *Mkcert) checkAndInstall() error {
 	out, err = exec.Command("mkcert",
 		"-cert-file", m.serverPath+"/localhost.crt", "-key-file", m.serverPath+"/localhost.key",
 		"*.espal.loc", "espal.loc", "localhost", "127.0.0.1", "::1").CombinedOutput()
-	if len(bytes.Trim(out, "\n\t ")) > 0 {
+	if len(bytes.TrimSpace(out)) > 0 {
 		fmt.Println(string(out))
 	}
 	if err != nil {
