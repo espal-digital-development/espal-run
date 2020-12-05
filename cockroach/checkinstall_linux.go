@@ -23,7 +23,7 @@ func (c *Cockroach) checkInstall() error {
 	tmpDir := os.TempDir()
 	tarFileName := tmpDir + "/cockroach.tgz"
 	if err := c.downloadFile(tarFileName,
-		"https://binaries.cockroachdb.com/cockroach-v20.1.3.linux-amd64.tgz"); err != nil {
+		"https://binaries.cockroachdb.com/cockroach-"+c.version+".linux-amd64.tgz"); err != nil {
 		return errors.Trace(err)
 	}
 	out, err := exec.Command("tar", "zxvf", tarFileName).CombinedOutput()
@@ -31,7 +31,7 @@ func (c *Cockroach) checkInstall() error {
 		log.Println(string(out))
 		return errors.Trace(err)
 	}
-	out, err = exec.Command("cp", "cockroach-v20.1.3.linux-amd64/cockroach", os.Getenv("GOPATH")+"/bin/").
+	out, err = exec.Command("cp", "cockroach-"+c.version+".linux-amd64/cockroach", os.Getenv("GOPATH")+"/bin/").
 		CombinedOutput()
 	if err != nil {
 		log.Println(string(out))

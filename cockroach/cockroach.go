@@ -10,6 +10,7 @@ import (
 
 type Cockroach struct {
 	desiredNodes  int
+	version       string
 	host          string
 	rootUser      string
 	portStart     int
@@ -36,6 +37,16 @@ func (c *Cockroach) GetDesiredNodes() int {
 // SetDesiredNodes sets desiredNodes.
 func (c *Cockroach) SetDesiredNodes(desiredNodes int) {
 	c.desiredNodes = desiredNodes
+}
+
+// GetVersion gets version.
+func (c *Cockroach) GetVersion() string {
+	return c.version
+}
+
+// SetVersion sets version.
+func (c *Cockroach) SetVersion(version string) {
+	c.version = strings.TrimSpace(version)
 }
 
 // GetHost gets host.

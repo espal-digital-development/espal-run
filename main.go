@@ -21,6 +21,7 @@ import (
 	"github.com/espal-digital-development/espal-run/runner"
 	"github.com/espal-digital-development/espal-run/storeintegrity"
 	"github.com/espal-digital-development/espal-run/system"
+	"github.com/espal-digital-development/semver"
 	"github.com/juju/errors"
 )
 
@@ -38,17 +39,22 @@ const (
 
 // nolint:gochecknoglobals
 var (
-	cwd               string
-	createProjectPath string
-	appPath           string
-	fullConfigFile    bool
-	runChecks         bool
-	runQTC            bool
-	skipDB            bool
-	resetDB           bool
-	dbPortStart       int
-	dbNodes           int
-	devMode           bool
+	cwd                   string
+	createProjectPath     string
+	appPath               string
+	fullConfigFile        bool
+	runChecks             bool
+	runQTC                bool
+	skipDB                bool
+	resetDB               bool
+	dbPortStart           int
+	dbNodes               int
+	devMode               bool
+	cockroachVersion      string
+	forceCockroachVersion bool
+
+	minCockroachVersion = "v20.1.3"
+	maxCockroachVersion = "v20.2.2"
 )
 
 // TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
@@ -69,6 +75,9 @@ func parseFlags() {
 	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
 	flag.BoolVar(&devMode, "dev", false, "Create the project in dev mode")
+	flag.StringVar(&cockroachVersion, "cockroach-version", "v20.2.2", "Target a specific Cockroach version")
+	flag.BoolVar(&forceCockroachVersion, "force-cockroach-version", false,
+		"Force the cockroach version, even if falls outside the recommended range")
 	flag.Parse()
 }
 
@@ -229,8 +238,30 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
+
+	var version string
+
+	semver, err := semver.New()
+	if err != nil {
+		return errors.Trace(err)
+	}
+	inRange, err := semver.InRange(cockroachVersion, minCockroachVersion, maxCockroachVersion)
+	if err != nil {
+		return errors.Trace(err)
+	}
+	if !inRange {
+		baseMessage := "Cockroach version is out of range"
+		if forceCockroachVersion {
+			log.Printf("%s, but forced. Continuing..", baseMessage)
+		} else {
+			return errors.Errorf("%s. Given `%s`, but expected between `%s` and `%s`", baseMessage, cockroachVersion,
+				minCockroachVersion, maxCockroachVersion)
+		}
+	}
+
 	// TODO :: Auto-detect info based on existing config.yml?
 	cockroach.SetDesiredNodes(dbNodes)
+	cockroach.SetVersion(version)
 	cockroach.SetPortStart(dbPortStart)
 	// TODO :: Random generate user
 	cockroach.SetRootUser(defaultDatabaseRootUser)

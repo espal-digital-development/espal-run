@@ -18,6 +18,7 @@ func (c *Cockroach) checkInstall() error {
 	if isInstalled {
 		return nil
 	}
+	// TODO :: Not high prio, but this always installs the latest version, which might break compatibility.
 	log.Println(cockroachNotFoundInstalling)
 	out, err := exec.Command("brew", "install", "cockroach").CombinedOutput()
 	if err != nil {
