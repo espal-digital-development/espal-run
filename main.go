@@ -48,6 +48,7 @@ var (
 	resetDB           bool
 	dbPortStart       int
 	dbNodes           int
+	devMode           bool
 )
 
 // TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
@@ -67,6 +68,7 @@ func parseFlags() {
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
 	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
+	flag.BoolVar(&devMode, "dev", false, "Create the project in dev mode")
 	flag.Parse()
 }
 
@@ -87,7 +89,7 @@ func main() {
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}
-		projectCreator, err := projectcreator.New()
+		projectCreator, err := projectcreator.New(devMode)
 		if err != nil {
 			log.Fatal(errors.ErrorStack(err))
 		}

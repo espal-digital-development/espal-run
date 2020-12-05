@@ -1,6 +1,7 @@
 package projectcreator
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,8 +12,10 @@ import (
 )
 
 type ProjectCreator struct {
+	devMode bool
 }
 
+// nolint:funlen
 func (c *ProjectCreator) Do(path string) error {
 	stat, err := os.Stat(path)
 	if err != nil && !os.IsNotExist(err) {
@@ -57,11 +60,35 @@ func (c *ProjectCreator) Do(path string) error {
 		return errors.Trace(err)
 	}
 
+	// TODO :: Need to find wherever the espal-core and espal-module-core are
+	if c.devMode {
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		modFilePath := absPath + "/go.mod"
+		modFile, err := ioutil.ReadFile(modFilePath)
+		if err != nil {
+			return errors.Trace(err)
+		}
+		modFile = bytes.Replace(modFile, []byte("require ("), []byte("replace (\n"+
+			"	github.com/espal-digital-development/espal-core => ../espal-core\n"+
+			"	github.com/espal-digital-development/espal-module-core => ../espal-module-core\n"+
+			")\n\n"+
+			"require ("), 1)
+
+		if err := ioutil.WriteFile(modFilePath, modFile, 0600); err != nil {
+			return errors.Trace(err)
+		}
+	}
+
 	return nil
 }
 
 // New returns a new instance of ProjectCreator.
-func New() (*ProjectCreator, error) {
-	c := &ProjectCreator{}
+func New(devMode bool) (*ProjectCreator, error) {
+	c := &ProjectCreator{
+		devMode: devMode,
+	}
 	return c, nil
 }
