@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/espal-digital-development/espal-run/cockroach"
 	"github.com/espal-digital-development/espal-run/configchecker"
@@ -53,8 +54,8 @@ var (
 	cockroachVersion      string
 	forceCockroachVersion bool
 
-	minCockroachVersion = "v20.1.3"
-	maxCockroachVersion = "v20.2.2"
+	minCockroachVersion = "20.1.3"
+	maxCockroachVersion = "20.2.2"
 )
 
 // TODO :: Some problems with the command is the paths that might've been chosen in the config.yml. If they are totally
@@ -75,7 +76,7 @@ func parseFlags() {
 	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
 	flag.BoolVar(&devMode, "dev", false, "Create the project in dev mode")
-	flag.StringVar(&cockroachVersion, "cockroach-version", "v20.2.2", "Target a specific Cockroach version")
+	flag.StringVar(&cockroachVersion, "cockroach-version", "20.2.2", "Target a specific Cockroach version")
 	flag.BoolVar(&forceCockroachVersion, "force-cockroach-version", false,
 		"Force the cockroach version, even if falls outside the recommended range")
 	flag.Parse()
@@ -240,6 +241,10 @@ func cockroachSetup(randomString *randomstring.RandomString) error {
 	}
 
 	var version string
+
+	cockroachVersion = strings.TrimLeft(cockroachVersion, "v")
+	minCockroachVersion = strings.TrimLeft(minCockroachVersion, "v")
+	maxCockroachVersion = strings.TrimLeft(maxCockroachVersion, "v")
 
 	semver, err := semver.New()
 	if err != nil {
