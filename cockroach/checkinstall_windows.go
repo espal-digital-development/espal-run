@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -32,7 +33,7 @@ func (c *Cockroach) checkInstall() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(dbDirPath, 0600); err != nil {
+		if err := os.MkdirAll(dbDirPath, permissions.UserReadWrite); err != nil {
 			return errors.Trace(err)
 		}
 	}
@@ -92,7 +93,7 @@ func (c *Cockroach) download(dbBinPath string, dbDirPath string, zipPath string,
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(dbBinPath, 0600); err != nil {
+		if err := os.MkdirAll(dbBinPath, permissions.UserReadWrite); err != nil {
 			return errors.Trace(err)
 		}
 	}

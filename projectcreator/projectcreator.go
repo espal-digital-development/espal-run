@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -23,7 +24,7 @@ func (c *ProjectCreator) Do(path string) error {
 	}
 	switch {
 	case os.IsNotExist(err):
-		if err := os.MkdirAll(path, 0700); err != nil {
+		if err := os.MkdirAll(path, permissions.UserReadWriteExecute); err != nil {
 			return errors.Trace(err)
 		}
 	case stat.IsDir():
@@ -32,16 +33,16 @@ func (c *ProjectCreator) Do(path string) error {
 		return errors.Errorf("%s already exists, and is not a directory", path)
 	}
 
-	if err := ioutil.WriteFile(path+"/.gitignore", gitIgnoreFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/.gitignore", gitIgnoreFile, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(path+"/espal-run.yml", runFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/espal-run.yml", runFile, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(path+"/main.go", mainGoFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/main.go", mainGoFile, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
-	if err := ioutil.WriteFile(path+"/main_test.go", mainGoTestFile, 0600); err != nil {
+	if err := ioutil.WriteFile(path+"/main_test.go", mainGoTestFile, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
 
@@ -77,7 +78,7 @@ func (c *ProjectCreator) Do(path string) error {
 			")\n\n"+
 			"require ("), 1)
 
-		if err := ioutil.WriteFile(modFilePath, modFile, 0600); err != nil {
+		if err := ioutil.WriteFile(modFilePath, modFile, permissions.UserReadWrite); err != nil {
 			return errors.Trace(err)
 		}
 	}

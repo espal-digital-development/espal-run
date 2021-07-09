@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/espal-digital-development/espal-run/randomstring"
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -116,7 +117,7 @@ func (c *ConfigChecker) Do() error {
 	for _, configRequest := range configToRequest {
 		output = bytes.Replace(output, []byte(configRequest.Tag), []byte(configRequest.Value), 1)
 	}
-	if err := ioutil.WriteFile(c.path, output, 0600); err != nil {
+	if err := ioutil.WriteFile(c.path, output, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
 	if err := c.generateBasicDirectories(); err != nil {
@@ -139,7 +140,7 @@ func (c *ConfigChecker) generateDirIfNotExist(path string) error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(path, 0700); err != nil {
+		if err := os.MkdirAll(path, permissions.UserReadWriteExecute); err != nil {
 			return errors.Trace(err)
 		}
 	}

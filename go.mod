@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/espal-digital-development/semver v0.0.0-20201205114412-89534eeac2db
+	github.com/espal-digital-development/system v0.0.0-20210709095725-fc2ca8344570 // indirect
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f
 	github.com/mattn/go-colorable v0.1.8

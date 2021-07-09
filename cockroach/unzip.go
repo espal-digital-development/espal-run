@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -21,7 +22,7 @@ func (c *Cockroach) unzip(src, dest string) error {
 		}
 	}()
 
-	if err := os.MkdirAll(dest, 0600); err != nil {
+	if err := os.MkdirAll(dest, permissions.UserReadWrite); err != nil {
 		return errors.Trace(err)
 	}
 

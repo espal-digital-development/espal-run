@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 	"github.com/mattn/go-zglob"
 )
@@ -21,7 +22,7 @@ func (r *Runner) initFolders() error {
 		if r.verbosity >= verbosityVerbose {
 			r.runnerLog("mkdir %s", r.config.TmpPath)
 		}
-		return errors.Trace(os.Mkdir(r.config.TmpPath, 0700))
+		return errors.Trace(os.Mkdir(r.config.TmpPath, permissions.UserReadWriteExecute))
 	}
 	if r.verbosity >= verbosityVerbose {
 		r.runnerLog("tmp dir already exists")

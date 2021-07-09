@@ -1,6 +1,8 @@
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/espal-digital-development/semver v0.0.0-20201205114412-89534eeac2db h1:jCMMD62QzMv94ImX3xPfABul23jAmCNWyU22sevDUbE=
 github.com/espal-digital-development/semver v0.0.0-20201205114412-89534eeac2db/go.mod h1:VJxy/01N7i8cwbwigWqCrd5sZaOHI7kB4Qn4582yKBw=
+github.com/espal-digital-development/system v0.0.0-20210709095725-fc2ca8344570 h1:PAmqlZHhPpJvI8h0UZCG+c6O+Zioo1z3ed5weW3X+JM=
+github.com/espal-digital-development/system v0.0.0-20210709095725-fc2ca8344570/go.mod h1:3tdwoleZI7ktCYCx5tIRK6Zn7IjrXdPhdwbowTd/EK8=
 github.com/howeyc/fsnotify v0.9.0 h1:0gtV5JmOKH4A8SsFxG2BczSeXWWPvcMT0euZt5gDAxY=
 github.com/howeyc/fsnotify v0.9.0/go.mod h1:41HzSPxBGeFRQKEEwgh49TRw/nKBsYZ2cF1OzPjSJsA=
 github.com/juju/ansiterm v0.0.0-20160907234532-b99631de12cf/go.mod h1:UJSiEoRfvx3hP73CvoARgeLjaIOjybY9vj8PUPPFGeU=

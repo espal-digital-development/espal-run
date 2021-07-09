@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -89,7 +90,7 @@ func (c *Cockroach) setupDirectories() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(c.certsDir, 0740); err != nil {
+		if err := os.MkdirAll(c.certsDir, permissions.UserReadWriteExecuteGroupRead); err != nil {
 			return errors.Trace(err)
 		}
 	}
@@ -98,7 +99,7 @@ func (c *Cockroach) setupDirectories() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(c.safeDir, 0740); err != nil {
+		if err := os.MkdirAll(c.safeDir, permissions.UserReadWriteExecuteGroupRead); err != nil {
 			return errors.Trace(err)
 		}
 	}

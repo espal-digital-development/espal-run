@@ -36,6 +36,7 @@ const (
 	defaultDatabaseHTTPUser = "app"
 	defaultSoftLimitMax     = 20000
 	defaultSoftLimitCur     = 20000
+	defaultDBPortStart      = 36257
 )
 
 // nolint:gochecknoglobals
@@ -73,7 +74,7 @@ func parseFlags() {
 	flag.BoolVar(&runQTC, "run-qtc", false, "Run the QuickTemplate Compiler")
 	flag.BoolVar(&skipDB, "skip-db", false, "Don't run the Cockroach checks, installer and starter")
 	flag.BoolVar(&resetDB, "reset-db", false, "Reset the database")
-	flag.IntVar(&dbPortStart, "db-port-start", 36257, "Port start range")
+	flag.IntVar(&dbPortStart, "db-port-start", defaultDBPortStart, "Port start range")
 	flag.IntVar(&dbNodes, "db-nodes", 1, "Desired amount of nodes")
 	flag.BoolVar(&devMode, "dev", false, "Create the project in dev mode")
 	flag.StringVar(&cockroachVersion, "cockroach-version", "20.2.2", "Target a specific Cockroach version")

@@ -16,7 +16,10 @@ import (
 	"github.com/mattn/go-colorable"
 )
 
-const startChannelSize = 1000
+const (
+	startChannelSize = 1000
+	seperatorDashes  = 20
+)
 
 type Runner struct {
 	path   string
@@ -190,7 +193,7 @@ func (r *Runner) start() {
 			}
 			started = true
 			if r.verbosity >= verbosityQuiet {
-				r.mainLog(strings.Repeat("-", 20))
+				r.mainLog(strings.Repeat("-", seperatorDashes))
 			}
 		}
 	}(r)

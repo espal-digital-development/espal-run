@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/espal-digital-development/system/permissions"
 	"github.com/juju/errors"
 )
 
@@ -40,7 +41,7 @@ func (m *Mkcert) CheckAndInstall() error {
 		return errors.Trace(err)
 	}
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(m.serverPath, 0700); err != nil {
+		if err := os.MkdirAll(m.serverPath, permissions.UserReadWriteExecute); err != nil {
 			return errors.Trace(err)
 		}
 	}
